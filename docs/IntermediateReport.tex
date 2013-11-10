@@ -18,5 +18,69 @@ Superior Technical Institute}
 % Section 1:  Introduction 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
+In this document we will be describing our solution and explaining how we intend
+to fulfill the challenged proposed within the project specification.
+
+We will start by explaining why we choose Kademlia as our DHT for this project.
+Next we detail the protocol that we will be using for implementing a distributed
+file system on top of a Kademlia peer-to-peer network overlay.
+
+Conclusion?
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 2:  Kademlia 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Kademlia}
+
+As one of the studied DHT and one of the proposed DHT implementations for the 
+project, we decided to use TomP2P, a Kademlia's protocol implementation.
+
+This decision was mainly motivated by the fact that Kademlia was designed to be
+used by file sharing applications and therefore provides some nice features that
+will be very helpful for our file system's implementation. 
+
+We will now describe some of the Kademlia features and explain how we will take 
+advantage of them. 
+
+\subsection{Iterative Parallel Search}
+Kademlia and therefore TomP2P uses iterative parallel search. Two main benefits
+from this search procedure are: 
+
+\begin{itemize}
+\item generated/received information is useful for refreshing the k-buckets;
+\item parallel queries prevents waiting for timeouts to detect failed nodes and 
+allows the fastest nodes (the ones with the lowest RTT) to be used. 
+\end{itemize} 
+
+As that being, using Kademlia we will be able to provide a better quality of
+service by providing faster search and reduced maintenance traffic.
+
+\subsection{Key-Republishing}
+Key-Republishing is a very interesting feature provided by Kademlia. This feature
+is important to ensure the persistence of the key-value pairs.
+
+Two phenomena may jeopardize the key-value pairs: a node responsible for the pair
+leaving the network and a node with a closer id (closer to the key) joining the
+network. 
+
+TomP2P takes care of both scenarios using Indirect Replication (name used in the
+TomP2P's documentation). The activation of this mechanism will ensure that nodes
+react when one of the situations above described happen. 
+
+This Key-Republishing will be very useful since it will help implementing file
+replication algorithm that is one of the requirements for our file system.   
+
+\subsection{Caching (direct replication)}
+
+Another interesting feature is caching. Caching enables the replication of 
+key-value pairs along the search path. If we take in consideration that our 
+distance metric (exclusive or) is unidirectional, this means that searches 
+from different origins will converge into a search path. As that being, using
+caching, Kademlia is able to reduce the burden on nodes holding popular content.
+
+Within the context of our project, this functionality can be used to speed up
+the statistical information delivery. Since this information will be calculated
+periodically, its contents can be cached (temporarily) to provide lower load on
+the node holding this information. 
 
 \end{document}
