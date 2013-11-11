@@ -4,13 +4,14 @@
 
 \begin{document}
 \title{Peer-to-Peer File System}
+\institute{Peer-to-Peer Systems and Overlay Networks \\
+Masters Degree in Telecommunications and Informatics Engineering \\
+Instituto Superior T\'ecnico}
+
 \author{Group Number 2 \\
 Jo\~ao Granchinho n.54766 mail@ist.utl.pt \\
 Pedro Torres  n.63506 mail@ist.utl.pt \\
 Rodrigo Bruno n.67074 rodrigo.bruno@ist.utl.pt}
-\institute{Peer-to-Peer Systems and Overlay Networks \\
-Master Degree in Telecommunications and Informatics Engineering \\
-Superior Technical Institute}
 \maketitle
 
 
@@ -81,6 +82,19 @@ caching, Kademlia is able to reduce the burden on nodes holding popular content.
 Within the context of our project, this functionality can be used to speed up
 the statistical information delivery. Since this information will be calculated
 periodically, its contents can be cached (temporarily) to provide lower load on
-the node holding this information. 
+the node holding this information.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 3:  P2P FS Management 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+\section{Gossip}
+
+With the purpose of monitoring P2P FS and provide high level information to the users, we will use a Gossip protocol, where the nodes in each bucket will have knowledge of the information of each other. And upon information request, which was deployed in parallel, a chain event will be unleashed in which every node will share its bucket's information.\\
+Each node will store a key value pair with metadata with the number of users mounted and the list of files per user, and upon request the node will respond by consulting this metadata and doing some simple math. After convergence of the Gossip protocol it will be presented to the requester the final set of information.\\
+The algorithm for each type of informations is as follows:
+\begin{itemize}
+\item To obtain the number of users each node sums the value in the metadata and divides by the replication factor.
+\item To obtain the number of active users each node will respond with the number of users that have more than 0 users mounted. 
+\end{itemize} 
 
 \end{document}
