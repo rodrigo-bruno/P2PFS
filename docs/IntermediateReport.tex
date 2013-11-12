@@ -10,7 +10,7 @@ Instituto Superior T\'ecnico}
 
 \author{Group Number 2 \\
 Jo\~ao Granchinho n.54766 mail@ist.utl.pt \\
-Pedro Torres  n.63506 mail@ist.utl.pt \\
+Pedro Torres  n.63506 pedro.torres@ist.utl.pt \\
 Rodrigo Bruno n.67074 rodrigo.bruno@ist.utl.pt}
 \maketitle
 
@@ -201,21 +201,25 @@ is application dependent and for developing purposes we will start by using a
 
 \section{Other Design Decisions}
 \begin{itemize}
-\item Falar dos clientes so passarem a guardar fichieros passado algum tempo;
-\item Cache local do file system. Leituras periodicas da metadata. Atrasar escritas.
+\item As an optimization method we define that users will store its files when they stay connected for a long span of time;
+\item Another optimization relates to local caching of the file system to improve search efficiency. As well as periodic Reads of node metadata to update information and the delay of Writes to avoid collisions.
 \end{itemize}
 
-Se calhar pôr estes formatos ajuda a perceber:
-<id, <type, user|file|directory|part> <resto>>
-se type==user -> resto= <~/, files na home do utilizador>, <mounts, nº de mounts>
-se type==file -> resto= <number of parts, nº>, <hash completa do ficheiro>
-se type==dir -> resto= <lista de ficheiro na dir>
-se type==part -> resto=<content, conteudo>, <hash, a hash>
-
-E explicar que isto: <~/, files na home do utilizador> é mantido para termos acesso só 
-à lista de ficheiros estilo 'ls'
+\section{Semantics}
+We provide some semantics to allow a better understanding of our system:
+\begin{itemize}
+\item \textless \emph{id}, \textless \emph{type}, \emph{user}\textbar \emph{file}\textbar \emph{directory}\textbar \emph{part}\textgreater \textless \emph{rest}\textgreater\textgreater ;
+\end{itemize}
+Depending on the \emph{type} we have different semantics where the rest varies:
+\begin{itemize}
+\item if \emph{type} is the \emph{user} then the  rest is \textless \textasciitilde /\textgreater, files in the user's home directory, \textless \emph{mounts}\textgreater, number of mounts in node;
+\item if \emph{type} is a \emph{file} then the  \emph{rest} is \textless number of parts\textgreater , number of parts of the file, \textless complete hash of the file\textgreater;
+\item if \emph{type} is a \emph{directory} then \emph{rest} is \textless list of files in the \emph{directory}\textgreater;
+\item if \emph{type} is a \emph{file part} then \emph{rest} is \textless \emph{content}\textgreater , content of file\textgreater , \textless \emph{hash}\textgreater;
+\end{itemize}
+The \textless \textasciitilde / is maintained only to facilitate access to the files in the user's home directory as a list commonly seen as a result of the Unix command \textbf{\emph{ls}}.
 
 \section{Future Enhancements}
-Se houver espaço.
+
 
 \end{document}
