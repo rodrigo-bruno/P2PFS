@@ -89,12 +89,73 @@ the node holding this information.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 \section{Gossip}
 
-With the purpose of monitoring P2P FS and provide high level information to the users, we will use a Gossip protocol, where the nodes in each bucket will have knowledge of the information of each other. And upon information request, which was deployed in parallel, a chain event will be unleashed in which every node will share its bucket's information.\\
-Each node will store a key value pair with metadata with the number of users mounted and the list of files per user, and upon request the node will respond by consulting this metadata and doing some simple math. After convergence of the Gossip protocol it will be presented to the requester the final set of information.\\
+With the purpose of monitoring P2P FS and provide high level information to the 
+users, we will use a Gossip protocol, where the nodes in each bucket will have 
+knowledge of the information of each other. And upon information request, which
+ was deployed in parallel, a chain event will be unleashed in which every node
+ will share its bucket's information.\\
+Each node will store a key value pair with metadata with the number of users 
+mounted and the list of files per user, and upon request the node will respond 
+by consulting this metadata and doing some simple math. After convergence of the
+ Gossip protocol it will be presented to the requester the final set of 
+ information.\\
 The algorithm for each type of informations is as follows:
 \begin{itemize}
-\item To obtain the number of users each node sums the value in the metadata and divides by the replication factor.
-\item To obtain the number of active users each node will respond with the number of users that have more than 0 users mounted. 
+\item To obtain the number of users each node sums the value in the metadata and
+ divides by the replication factor.
+\item To obtain the number of active users each node will respond with the number
+ of users that have more than 0 users mounted.
 \end{itemize} 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 4:  File System Metadata
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{File System Metadata}
+
+In P2PFS there are two types of entities: users and files . Entities representing
+users will use the user name as key (hash of the user name) and the value will 
+be the number of active mount points. 
+
+Files will represent both normal files and directories. Both entities will have 
+a number of parts and a summary (checksum). For files, the actual file content
+is stored; for directories, the available files within will be stored. Only the
+first part of each file needs to store the number of file parts. Note that 
+TomP2P is able to store multiple values for each key (given an auxiliary key).   
+
+Files stored on P2PFS will have specially constructed ids (that will be used to
+generate keys) obtained by using the following information: owner user, complete 
+path, file type and part number.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section 5:  Load Balancing/Security
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Load Balancing/Security}
+
+Load balancing and security are two of our project's requirements. This two 
+requirements can be met by splitting files into multiple nodes:
+\begin{itemize}
+\item load balancing will be achieved by using a hash function that will take
+an id and output a new key that will be mapped into a different node. This way,
+when a file gets bigger that a certain amount of kBs, the file gets split and
+therefore, the load for accessing the file will be shared;
+\item security concerns will also be met by file division since the files will
+tend to be divided in several machines. Therefore, no node will host all file
+parts.
+\end{itemize} 
+
+The used criteria for splitting a file is a fixed size limit. When the last part
+of a file gets bigger than the limit, that file gets split. By using a not so high
+value we facilitate the distribution of load among all nodes. However this value
+is application dependent and for developing purposes we will start by using a
+1Mb part size limit.   
+
+\section{Other Design Decisions}
+\begin{itemize}
+\item Falar dos clientes so passarem a guardar fichieros passado algum tempo;
+\item Cache local do file system. Leituras periodicas da metadata. Atrasar escritas.
+\end{itemize}
+
+\section{Future Enhancements}
+Se houver espaço.
 
 \end{document}
