@@ -20,9 +20,9 @@ Rodrigo Bruno n.67074 rodrigo.bruno@ist.utl.pt}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Introduction}
 In this document we will be describing our solution and explaining how we intend
-to fulfill the challenge proposed within the project specification.\\
-We will start by explaining why we chose Kademlia as our DHT for this project.
-Next we detail the protocol that we will be using for implementing a distributed
+to fulfill the challenge proposed by the project specification.\\
+We will start by explaining why we chose Kademlia as our DHT for this project and
+ then we detail the protocol that we will be using for implementing a distributed
 file system on top of a Kademlia peer-to-peer network overlay.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -34,44 +34,28 @@ As one of the studied DHT and one of the proposed DHT implementations for the
 project, we decided to use TomP2P, a Kademlia's protocol implementation.\\
 This decision was mainly motivated by the fact that Kademlia was designed to be
 used by file sharing applications and therefore provides some nice features that
-will be very helpful for our file system's implementation. \\
-We will now describe some of the Kademlia features and explain how we will take 
+will be very helpful for our file system's implementation. We will now describe
+ some of the Kademlia features and explain how we will take 
 advantage of them. 
 
 \subsection{Iterative Parallel Search}
 Kademlia and therefore TomP2P uses iterative parallel search. Two main benefits
-from this search procedure are: 
-\begin{itemize}
-\item generated/received information is useful for refreshing the k-buckets;
-\item parallel queries prevents waiting for timeouts to detect failed nodes and 
-allows the fastest nodes (the ones with the lowest RTT) to be used. 
-\end{itemize} 
-As that being, using Kademlia we will be able to provide a better quality of
-service by providing faster search and reduced maintenance traffic.
+from this search procedure are: 1) generated/received information is useful for
+ refreshing the k-buckets; 2) parallel queries prevents waiting for timeouts to
+ detect failed nodes and allows the fastest nodes (the ones with the lowest RTT)
+ to be used. As that being, using Kademlia we will be able to provide a better 
+ quality of service by providing faster search and reduced maintenance traffic.
 
 \subsection{Key-Republishing}
-Key-Republishing is a very interesting feature provided by Kademlia. This feature
-is important to ensure the persistence of the key-value pairs.\\
-Two phenomena may jeopardize the key-value pairs: a node responsible for the pair
-leaving the network and a node with a closer id (closer to the key) joining the
-network. \\
-TomP2P takes care of both scenarios using Indirect Replication (name used in the
-TomP2P's documentation). The activation of this mechanism will ensure that nodes
-react when one of the situations above described happen. \\
-This Key-Republishing will be very useful since it will help implementing file
-replication algorithm that is one of the requirements for our file system.   
-
-\subsection{Caching (direct replication)}
-
-Another interesting feature is caching. Caching enables the replication of 
-key-value pairs along the search path. If we take in consideration that our 
-distance metric (exclusive or) is unidirectional, this means that searches 
-from different origins will converge into a search path. As that being, using
-caching, Kademlia is able to reduce the burden on nodes holding popular content.\\
-Within the context of our project, this functionality can be used to speed up
-the statistical information delivery. Since this information will be calculated
-periodically, its contents can be cached (temporarily) to provide lower load on
-the node holding this information.
+Key-Republishing is a very interesting feature and it is important to ensure the
+ persistence of the key-value pairs. Two phenomena may 
+jeopardize the key-value pairs: a node responsible for the pair leaving the 
+network and a node with a closer id (closer to the key) joining the network. \\
+TomP2P takes care of both scenarios using Indirect Replication. The activation 
+of this mechanism will ensure that nodes react when one of the situations above 
+described happen. This Key-Republishing will be very useful since it will help 
+implementing file replication algorithm that is one of the requirements for our 
+file system.   
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section 3:  P2P FS Management 
@@ -149,14 +133,25 @@ convergence time.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{File System Metadata}
 
-In P2P FS there are two types of entities: users and files . Entities representing
-users will use the user name as key (hash of the user name) and the value will 
-be the number of active mount points. \\
-Files will represent both normal files and directories. Both entities will have 
-a number of parts and a summary (checksum). For files, the actual file content
-is stored; for directories, the available files within will be stored. Only the
-first part of each file needs to store the number of file parts. Note that 
-TomP2P is able to store multiple values for each key (given an auxiliary key).   \\
+
+In P2PFS, all metadata is stored as files. For better understanding, we will
+present its main structure:
+\begin{itemize}
+\item \textless \emph{id}, \textless \emph{type}, \emph{user}\textbar \emph{file}\textbar \emph{directory}\textbar \emph{part}\textgreater \textless \emph{rest}\textgreater\textgreater ;
+\end{itemize}
+
+Note that TomP2P is able to store multiple values for each key (given an 
+auxiliary key). Therefore, the \emph{rest} field will be a set of secondary
+keys and respective values.
+
+\begin{itemize}
+\item if \emph{type} == \emph{user} then \emph{rest} has two sec-keys: home (for accessing files in the user's home directory) and \textless \emph{mounts}\textgreater (number of mounts in node);
+\item if \emph{type} == \emph{file} then \emph{rest} has three sec-keys: nparts (number of parts of the file), content (access data) and hash;
+\item if \emph{type} == \emph{directory} then \emph{rest} is the same as in files;
+\item if \emph{type} == \emph{part} then \emph{rest} the same as files without the nparts key.
+\end{itemize}
+
+
 Files stored on P2P FS will have specially constructed ids (that will be used to
 generate keys) obtained by using the following information: owner user, complete 
 path, file type and part number.
@@ -185,25 +180,9 @@ is application dependent and for developing purposes we will start by using a
 
 \section{Other Design Decisions}
 \begin{itemize}
-\item As an optimization method we define that users will store its files when they stay connected for a long span of time;
-\item Another optimization relates to local caching of the file system to improve search efficiency. As well as periodic Reads of node metadata to update information and the delay of Writes to avoid collisions.
+\item We define that users will host files when they stay connected for a long span of time;
+\item Local caching of the user's files will be done to improve search efficiency.
+To this end, we will have to delay writes and reads (for maximizing the cash usage).
 \end{itemize}
-
-\section{Semantics}
-We provide some semantics to allow a better understanding of our system:
-\begin{itemize}
-\item \textless \emph{id}, \textless \emph{type}, \emph{user}\textbar \emph{file}\textbar \emph{directory}\textbar \emph{part}\textgreater \textless \emph{rest}\textgreater\textgreater ;
-\end{itemize}
-Depending on the \emph{type} we have different semantics where the rest varies:
-\begin{itemize}
-\item if \emph{type} is the \emph{user} then the  rest is \textless \textasciitilde /\textgreater, files in the user's home directory, \textless \emph{mounts}\textgreater, number of mounts in node;
-\item if \emph{type} is a \emph{file} then the  \emph{rest} is \textless number of parts\textgreater , number of parts of the file, \textless complete hash of the file\textgreater;
-\item if \emph{type} is a \emph{directory} then \emph{rest} is \textless list of files in the \emph{directory}\textgreater;
-\item if \emph{type} is a \emph{file part} then \emph{rest} is \textless \emph{content}\textgreater , content of file\textgreater , \textless \emph{hash}\textgreater;
-\end{itemize}
-The \textless \textasciitilde / is maintained only to facilitate access to the files in the user's home directory as a list commonly seen as a result of the Unix command \textbf{\emph{ls}}.
-
-\section{Future Enhancements}
-
 
 \end{document}
