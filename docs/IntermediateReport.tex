@@ -78,17 +78,15 @@ other halves to itself. The result is Sn/W1.
 \item number of users:
 To know the number of users we apply the same algorithm as before, except now 
 the value Su will simply be the number of metadata lists. For each node we see if
-that node contains any metadata lists, each list corresponds with a user. Since 
-the lists themselves will be replicated, after the return of the request (which will
-be the result of the gossip) all there's left to do is divide by the replication 
-factor to get an approximated number of users. So the result is (Su/W1)/Rep.
+that node contains any user keys. Since the keys themselves will be replicated,
+ after the return of the request (which will be the result of the gossip) all
+ there's left to do is divide by the replication factor to get an approximated
+ number of users. So the result is (Su/W1)/Rep.
 
 \item number of active users (with their FS mounted):
 To know the number of active users we apply the same algorithm seen so far, with a
-value Sa which will be equal to the number of lists that node maintains with the
-mounted flag. Since the metadata lists will contain information about that user's
-FS mount state, all that's needed is to count those lists to get the number of
-active users per node. Same as before, because of the replication after the return
+value Sa which will be equal to the number of user keys that node maintains with
+mounted dirs. Same as before, because of the replication after the return
 we just need to divide this number by the replication factor: (Sa/W1)/Rep.
 
 Since performing a sum or counting uses the same values for weight, for queries 1,2 
@@ -180,9 +178,11 @@ is application dependent and for developing purposes we will start by using a
 
 \section{Other Design Decisions}
 \begin{itemize}
-\item We define that users will host files when they stay connected for a long span of time;
+\item We define that users will host files when they stay connected for a long span of time (for example for more that 15 minutes);
 \item Local caching of the user's files will be done to improve search efficiency.
 To this end, we will have to delay writes and reads (for maximizing the cash usage).
+\item For developing purposes we will start by using a replication factor of 3. If we feel that the nodes in the network
+have a very high churn we will be forced to increase the replication factor (this will instroduce extra overhead).
 \end{itemize}
 
 \end{document}
