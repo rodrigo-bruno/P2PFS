@@ -91,21 +91,21 @@ we just need to divide this number by the replication factor: (Sa/W1)/Rep.
 
 Since performing a sum or counting uses the same values for weight, for queries 1,2 
 and 3 the weight used will be the same (W1), and the exchanges for these 3 queries 
-can be sent in a single message (ex: \textless Sn, Su, Sa, W1\textgreater). For these algortihms to work 
+can be sent in a single message (ex: \textless Sn, Su, Sa, W1\textgreater). For these algorithms to work 
 we need to ensure the weight of the total nodes sums up to 1. To do this we aim to
 have X bootstrapping nodes in the initial network. Each of these nodes will have 
 W1=1/X. 
 Any new nodes that join always have W1=0. The weight will end up being distributed 
 among the new peers and thus diluted, making the total sum equal to 1.
 
-\item avg number of files stored:
-To perform an average the algortihm is similar to the one used so far. Each node
+\item average number of files stored:
+To perform an average the algorithm is similar to the one used so far. Each node
 sends half its value Ss and half its value W2 to another, except this time every 
 node starts with W2 = 1. To get the Ss, each node will get the number of files 
 stored by counting the files maintained. Since all the files are replicated, after
 all nodes converge, the average will be (Ss/W2)/Rep.
 
-\item avg amount of MB stored per node:
+\item average amount of MB stored per node:
 For this query, just like the query before, each node sends half its value Sm and 
 half its value W2 to another, each node having initially W2 = 1. Sm for a given node
 will be the sum of all the files MB in a given node. The result will be Sm/W2. Just
@@ -118,8 +118,8 @@ it makes sense to exchange both requests at the same time, just like before:
 
 Whenever any of the values (S's) changes internally on a given node (either because
 the number of metadata lists changed, or the number of lists with mount flags changed,
-etc) the difference will be added/subtracted from the current value but the weight 
-stays the same and the algortithm resumes normally.
+etc.) the difference will be added/subtracted from the current value but the weight 
+stays the same and the algorithm resumes normally.
 Since the gossip algorithms converge after a while, we will need to test various
 gossiping exchange intervals and find one that is acceptable both in bandwidth and
 convergence time.
@@ -132,7 +132,7 @@ convergence time.
 \section{File System Metadata}
 
 
-In P2PFS, all metadata is stored as files. For better understanding, we will
+In P2P FS, all metadata is stored as files. For better understanding, we will
 present its main structure:
 \begin{itemize}
 \item \textless \emph{id}, \textless \emph{type}, \emph{user}\textbar \emph{file}\textbar \emph{directory}\textbar \emph{part}\textgreater \textless \emph{rest}\textgreater\textgreater ;
