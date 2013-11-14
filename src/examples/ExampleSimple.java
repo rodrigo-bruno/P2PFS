@@ -1,6 +1,8 @@
 package examples;
 
 import java.io.IOException;
+import java.net.Inet4Address;
+import net.tomp2p.connection.Bindings;
 import net.tomp2p.futures.FutureDHT;
 import net.tomp2p.futures.FutureBootstrap; 
 import net.tomp2p.p2p.Peer;
@@ -13,9 +15,12 @@ public class ExampleSimple {
     final private Peer peer;
 
     public ExampleSimple(int peerId) throws Exception {
-        peer = new PeerMaker(Number160.createHash(peerId)).setPorts(4000 + peerId).makeAndListen();
-        FutureBootstrap fb = peer.bootstrap().setBroadcast().setPorts(4001).start();
-        fb.awaitUninterruptibly();
+    	Bindings b = new Bindings("lo");
+        peer = new PeerMaker(Number160.createHash(peerId)).
+        		setPorts(4000 + peerId).
+        		setBindings(b).
+        		makeAndListen();
+        FutureBootstrap fb = peer.bootstrap().setInetAddress(Inet4Address.getByName("127.0.0.1")).setPorts(4000).start();
         if (fb.getBootstrapTo() != null) {
             peer.discover().setPeerAddress(fb.getBootstrapTo().iterator().next()).start().awaitUninterruptibly();
         }
@@ -28,6 +33,7 @@ public class ExampleSimple {
         }
         if (args.length == 2) {
             System.out.println("Name:" + args[1] + " IP:" + dns.get(args[1]));
+            dns.peer.shutdown();
         }
     }
 

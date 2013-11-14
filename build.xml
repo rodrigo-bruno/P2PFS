@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project name="p2pfs" basedir="." default="compile">
+
+	<property file="${basedir}/build.properties" />
+
+	<property name="main-class" value="examples.ExampleSimple" />
+	<property name="java-args-1" value="0 test.me 127.0.0.1" />
+	<property name="java-args-2" value="1 test.me" />
+	<property name="jar-name" value="p2pfs-2" />
+	
+  <property name="src.dir" value="${basedir}/src"/>  	  
+  <property name="build.dir" value="${basedir}/build"/>
+  <property name="lib.dir" value="${basedir}/lib"/>
+  <property name="build.classes" value="${build.dir}/classes"/>
+  
+  <property name="build.encoding" value="UTF-8"/>
+  
+  <property name="javac.debug" value="on"/>
+  <property name="javac.optimize" value="on"/>
+	<property name="javac.version" value="1.6"/>
+
+  <path id="classpath">
+    <pathelement location="${build.classes}"/>
+    <fileset dir="${lib.dir}">
+      <include name="**/*.jar" />
+    </fileset>
+  </path> 
+	
+	<target name="init">
+    <mkdir dir="${build.dir}"/>
+    <mkdir dir="${build.classes}"/>
+  </target>
+ 
+  <target name="compile" depends="clean,init" description="compile mobile-net classes">
+    <javac 
+        encoding="${build.encoding}"
+        srcdir="${src.dir}"
+        includes="**/*.java"
+        destdir="${build.classes}"
+        optimize="${javac.optimize}"
+    	  includeantruntime="false">
+      <classpath refid="classpath"/>
+    </javac>
+  	<unjar dest="${build.classes}">
+  	  <patternset><include name="**/*.class" /></patternset>
+  	  <fileset dir="${lib.dir}" includes="*.jar" excludes="TomP2P-4.4-*" />
+  	</unjar>
+    <copy todir="${build.classes}">
+        <fileset dir="."><include name="logback.xml"/></fileset>
+    </copy>
+  </target>
+
+  <target name="jar" depends="compile" description="Make jar">
+    <property name="jar.properties.list" value="log4j.properties, slf4.properties"/>
+    <jar jarfile="${build.dir}/${jar-name}.jar" basedir="${build.classes}">
+      <manifest>
+          <attribute name="Main-Class" value="${main-class}"/>
+      </manifest>
+    </jar>
+  </target>
+	
+	<target name="clean" depends="" description="Cleans build directory for the project">
+	  <delete dir="${build.classes}" includeEmptyDirs="true" followSymlinks="false" />
+	</target>
+	
+  <target name="run-1" depends="jar">
+    <java jar="${build.dir}/${jar-name}.jar" fork="true">
+      <arg line="${java-args-1}"/>
+    </java>
+  </target>
+	
+  <target name="run-2" depends="jar">
+    <java jar="${build.dir}/${jar-name}.jar" fork="true">
+    	<arg line="${java-args-2}"/>
+    </java>
+  </target>
+</project>
