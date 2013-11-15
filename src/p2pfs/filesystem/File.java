@@ -6,24 +6,34 @@ package p2pfs.filesystem;
 public class File extends Object {
 	
 	/**
-	 * FS path of the file.
+	 * Serializable id.
 	 */
-	private String path;
+	private static final long serialVersionUID = 1L;
+	/**
+	 * Parent directory.
+	 */
+	private Directory parent;
 	
 	/**
 	 * Constructor
 	 * @param hash - hash of the all file.
 	 * @param size
 	 */
-	public File(long hash, int size, String path) {
-		super(hash, size);
-		this.type = ObjectType.FILE;
-		this.path = path;
+	public File(Directory parent, long hash, int size, String name) {
+		super(hash, size, name);
+		this.setType(ObjectType.FILE);
+		this.parent = parent;
 	}
 	
 	/**
-	 * Getters
+	 * DEBUG only.
 	 */
-	public String getPath() { return this.path; }
-
+	@Override
+	public String toString() 
+	{ return new String(this.getSize() + "\t"+this.getName()+"\n"); }
+	
+	/**
+	 * Getter.
+	 */
+	public Directory getParent() { return this.parent; }
 }
