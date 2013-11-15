@@ -1,4 +1,4 @@
-package p2pfs.filesystem;
+package p2pfs.filesystem.types;
 
 /**
  * Class representing a user.

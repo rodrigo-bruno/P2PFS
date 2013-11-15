@@ -1,4 +1,4 @@
-package p2pfs.filesystem;
+package p2pfs.filesystem.types;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -45,24 +45,6 @@ public class Directory extends File {
 		super(parent, hash, size, name);
 		this.setType(ObjectType.DIRECTORY);
 		this.files = files;
-	}
-	
-	/**
-	 * Add file to directory.
-	 * @param file - file to be added.
-	 */
-	public void add(File file) 
-	{ this.files.add(file); }
-	
-	/**
-	 * Removes a file from a directory.
-	 * @param file - file to be removed.
-	 */
-	public void remove(File file) {
-		for(int i = 0; i < this.files.size(); i++) {
-			if(this.files.get(i).getHash() == file.getHash())
-			{ this.files.remove(i); break; }
-		}
 	}
 	
 	/**

@@ -3,7 +3,7 @@ package examples;
 import java.io.IOException;
 import java.net.Inet4Address;
 
-import p2pfs.filesystem.User;
+import p2pfs.filesystem.types.User;
 import net.tomp2p.connection.Bindings;
 import net.tomp2p.futures.FutureDHT;
 import net.tomp2p.futures.FutureBootstrap; 

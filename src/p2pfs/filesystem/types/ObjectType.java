@@ -1,4 +1,4 @@
-package p2pfs.filesystem;
+package p2pfs.filesystem.types;
 
 /**
  * Enumeration representing all file types.
