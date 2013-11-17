@@ -1,9 +1,16 @@
 package p2pfs.filesystem;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.net.Inet4Address;
+import java.net.ServerSocket;
+import java.net.Socket;
+
+import p2pfs.filesystem.types.dto.FileSystemDTO;
 
 import net.tomp2p.connection.Bindings;
+import net.tomp2p.futures.BaseFuture;
+import net.tomp2p.futures.BaseFutureListener;
 import net.tomp2p.futures.FutureBootstrap;
 import net.tomp2p.p2p.Peer;
 import net.tomp2p.p2p.PeerMaker;
@@ -26,7 +33,7 @@ public class PeerThread extends Thread {
 	/**
 	 * Port to be used for communication within the DHT.
 	 */
-	final private int listeningPort = 9999;
+	final private int dhtPort = 9999;
 	
 	/**
 	 * Arrays of addresses for the bootstraping nodes.
@@ -39,6 +46,21 @@ public class PeerThread extends Thread {
 	final private String iface = "eth0";
 	
 	/**
+	 * Socket where requests can be received.
+	 */
+	final private ServerSocket fsSocket;
+	
+	/**
+	 * Port to be used for the file system access socket.
+	 */
+	final private int fsPort = 9998;
+	
+	/**
+	 * Number of connection waiting in the queue.
+	 */
+	final private int backlog = 10;
+	
+	/**
 	 * Constructor.
 	 * Tries to enter the DHT.
 	 * @param peerId
@@ -46,8 +68,9 @@ public class PeerThread extends Thread {
 	 */
 	public PeerThread(String peerId) throws IOException {
 		super("PeerThread");
+		// setup the dht connection
         peer = new PeerMaker(Number160.createHash(peerId)).
-        		setPorts(this.listeningPort).
+        		setPorts(this.dhtPort).
         		setBindings(new Bindings(this.iface)).
         		makeAndListen();
         for(String addr : this.bootstrapNodes)
@@ -55,7 +78,7 @@ public class PeerThread extends Thread {
             FutureBootstrap fb = peer.
             		bootstrap().
             		setInetAddress(Inet4Address.getByName(addr)).
-            		setPorts(this.listeningPort).
+            		setPorts(this.dhtPort).
             		start();
             if (fb.getBootstrapTo() != null) {
                 peer.
@@ -66,6 +89,8 @@ public class PeerThread extends Thread {
                 break;
             }	
         }
+		// setup the fs socket
+		this.fsSocket = new ServerSocket(fsPort, backlog);
 	}
 	
 	/**
@@ -73,13 +98,39 @@ public class PeerThread extends Thread {
 	 */
 	@Override
 	public void run() {
-		/**
-		 * TODO: 
-		 * 1 - create socket
-		 * 2 - listen for connections
-		 * 3 - accept and make request to the DTH, store client socket with the future object
-		 * 4 - once the future object is ready, put the answer inside the client socket and close it.
-		 */
-	}
+		while(true) {
+			Socket clientConnection = null;
+			try {
+				clientConnection = this.fsSocket.accept();
+				ObjectInputStream in = 
+						new ObjectInputStream(clientConnection.getInputStream());
+				FileSystemDTO dto = 
+						(FileSystemDTO)in.readObject();
+				dto.execute(peer).addListener(
+						// TODO - implementation needs the client socket!
+						new BaseFutureListener<BaseFuture>() {
 
+							@Override
+							public void operationComplete(BaseFuture future)
+									throws Exception {
+								// TODO Auto-generated method stub
+
+							}
+
+							@Override
+							public void exceptionCaught(Throwable t) 
+									throws Exception {
+								// TODO Auto-generated method stub
+
+							}
+						});
+			} catch (IOException e) {
+				// if any socket operation fails
+				e.printStackTrace();
+			} catch (ClassNotFoundException e) {
+				// if in.readObject fails
+				e.printStackTrace();
+			}
+		}
+	}
 }
