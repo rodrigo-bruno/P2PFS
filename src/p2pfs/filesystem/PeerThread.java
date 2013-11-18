@@ -12,9 +12,9 @@ import p2pfs.filesystem.types.dto.OperationCompleteDTO;
 import p2pfs.filesystem.types.dto.RequestDTO;
 
 import net.tomp2p.connection.Bindings;
-import net.tomp2p.futures.BaseFuture;
 import net.tomp2p.futures.BaseFutureListener;
 import net.tomp2p.futures.FutureBootstrap;
+import net.tomp2p.futures.FutureDHT;
 import net.tomp2p.p2p.Peer;
 import net.tomp2p.p2p.PeerMaker;
 import net.tomp2p.peers.Number160;
@@ -34,7 +34,7 @@ public class PeerThread extends Thread {
 	 * Remember that this thread may be receiving requests from multiple sources
 	 * like the local host or any other client,
 	 */
-	public static abstract class FSFuture implements BaseFutureListener<BaseFuture> {
+	public static abstract class FSFuture implements BaseFutureListener<FutureDHT> {
 		
 		/**
 		 * Client Socket. Used to send the answer.
@@ -77,11 +77,11 @@ public class PeerThread extends Thread {
 		 * TODO
 		 */
 		@Override
-		public void operationComplete(BaseFuture future) throws Exception {
+		public void operationComplete(FutureDHT future) throws Exception {
 			ObjectOutputStream out = 
 					new ObjectOutputStream(this.clientConnection.getOutputStream());
 			if(future.isSuccess()) {
-				// TODO get data and send through the socket.
+				out.writeObject(new OperationCompleteDTO(future.getData().getObject(), true));
 			} else {
 				out.writeObject(new OperationCompleteDTO(null, false));
 			}
@@ -105,7 +105,7 @@ public class PeerThread extends Thread {
 		 * TODO
 		 */
 		@Override
-		public void operationComplete(BaseFuture future) throws Exception {
+		public void operationComplete(FutureDHT future) throws Exception {
 			ObjectOutputStream out = 
 					new ObjectOutputStream(this.clientConnection.getOutputStream());
 			out.writeObject(new OperationCompleteDTO(null, future.isSuccess()));
