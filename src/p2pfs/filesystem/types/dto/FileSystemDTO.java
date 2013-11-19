@@ -15,7 +15,12 @@ public abstract class FileSystemDTO {
 	 * Constructor.
 	 * @param object
 	 */
-	public FileSystemDTO(Object object)
-	{ this.object = object; }
+	public FileSystemDTO(Object object)	{ this.object = object; }
+	
+	/**
+	 * Getter.
+	 * @return - the object.
+	 */
+	public Object getObject() { return this.object; }
 
 }

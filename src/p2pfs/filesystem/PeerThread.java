@@ -51,6 +51,7 @@ public class PeerThread extends Thread {
 		/**
 		 * Default method for handling exceptions.
 		 * This method will send the exception to the client side.
+		 * @param t - the exception to be forwarded.
 		 */
 		@Override
 		public void exceptionCaught(Throwable t) throws Exception {
@@ -74,7 +75,11 @@ public class PeerThread extends Thread {
 		{ super(clientConnection); }
 
 		/**
-		 * TODO
+		 * Method that will be called when a get operation completes.
+		 * The procedure is to return an OperationCompleteDTO with the answer.
+		 * Note that if the operation was not successful, a null object is sent.
+		 * @param future - the future object with information regarding the 
+		 * operation.
 		 */
 		@Override
 		public void operationComplete(FutureDHT future) throws Exception {
@@ -102,7 +107,12 @@ public class PeerThread extends Thread {
 		{ super(clientConnection); }
 
 		/**
-		 * TODO
+		 * Method that will be called when a put operation completes.
+		 * The procedure is to return an OperationCompleteDTO with the answer.
+		 * Note that the object will always be set to null since the put operation
+		 * don't return an actual object.
+		 * @param future - the future object with information regarding the 
+		 * operation.
 		 */
 		@Override
 		public void operationComplete(FutureDHT future) throws Exception {
@@ -140,8 +150,13 @@ public class PeerThread extends Thread {
 	
 	/**
 	 * Port to be used for the file system access socket.
+	 * This variable is static since it needs to be public (so that the client
+	 * implementation can see the port number).
+	 * 
+	 * FIXME: maybe all this configuration stuff should be moved to a configuration
+	 * file.
 	 */
-	final private int fsPort = 9998;
+	final public static int FILESYSTEM_PORT = 9998;
 	
 	/**
 	 * Number of connection waiting in the queue.
@@ -178,7 +193,7 @@ public class PeerThread extends Thread {
             }	
         }
 		// setup the FS socket
-		this.fsSocket = new ServerSocket(fsPort, backlog);
+		this.fsSocket = new ServerSocket(FILESYSTEM_PORT, backlog);
 	}
 	
 	/**
@@ -189,10 +204,12 @@ public class PeerThread extends Thread {
 		while(true) {
 			Socket clientConnection = null;
 			try {
+				// FIXME: create a thread to client!
 				clientConnection = this.fsSocket.accept();
 				ObjectInputStream in = 
 						new ObjectInputStream(clientConnection.getInputStream());
 				RequestDTO dto = (RequestDTO)in.readObject();
+				// FIXME: access to peer object should be synchronized!
 				dto.execute(peer, clientConnection);
 			} catch (IOException e) {
 				// if any socket operation fails
