@@ -6,11 +6,11 @@ import java.io.ObjectOutputStream;
 import java.net.Inet4Address;
 import java.net.ServerSocket;
 import java.net.Socket;
-
+import java.nio.channels.ClosedByInterruptException;
+import java.util.ArrayList;
 import p2pfs.filesystem.types.dto.ExceptionDTO;
 import p2pfs.filesystem.types.dto.OperationCompleteDTO;
 import p2pfs.filesystem.types.dto.RequestDTO;
-
 import net.tomp2p.connection.Bindings;
 import net.tomp2p.futures.BaseFutureListener;
 import net.tomp2p.futures.FutureBootstrap;
@@ -164,6 +164,14 @@ public class PeerThread extends Thread {
 	final private int backlog = 10;
 	
 	/**
+	 * This list will hold all the client threads ever created.
+	 * This is needed for cleaning all threads properly.
+	 * Waring: in a long running execution, this list might get big. So it would
+	 * be nice to have some mechanism to clean it periodically.
+	 */
+	private ArrayList<Thread> clientThreads = null; 
+	
+	/**
 	 * Constructor.
 	 * Tries to enter the DHT.
 	 * @param peerId
@@ -176,8 +184,7 @@ public class PeerThread extends Thread {
         		setPorts(this.dhtPort).
         		setBindings(new Bindings(this.iface)).
         		makeAndListen();
-        for(String addr : this.bootstrapNodes)
-        {
+        for(String addr : this.bootstrapNodes) {
             FutureBootstrap fb = peer.
             		bootstrap().
             		setInetAddress(Inet4Address.getByName(addr)).
@@ -194,37 +201,86 @@ public class PeerThread extends Thread {
         }
 		// setup the FS socket
 		this.fsSocket = new ServerSocket(FILESYSTEM_PORT, backlog);
+		// initialize the client threads list
+		this.clientThreads = new ArrayList<Thread>();
 	}
 	
 	/**
 	 * Method that encapsulates the main functionality.
+	 * For each new incoming connection, a new thread is created.
 	 */
 	@Override
 	public void run() {
 		while(true) {
-			Socket clientConnection = null;
-			try {
-				// FIXME: create a thread to client!
-				clientConnection = this.fsSocket.accept();
-				ObjectInputStream in = 
-						new ObjectInputStream(clientConnection.getInputStream());
-				RequestDTO dto = (RequestDTO)in.readObject();
-				// FIXME: access to peer object should be synchronized!
-				dto.execute(peer, clientConnection);
-			} catch (IOException e) {
-				// if any socket operation fails
-				e.printStackTrace();
-			} catch (ClassNotFoundException e) {
-				// if in.readObject fails
-				e.printStackTrace();
-			} finally {
 				try {
-					clientConnection.close();
-				} catch (IOException e) {
-					// if the socket fails to close.
-					e.printStackTrace();
+					Thread t = new Thread(
+									this.getClientRunnable(
+											this.fsSocket.accept()));
+					this.clientThreads.add(t);	
+					t.run();
 				}
-			}
+				// This is the standard procedure to stop this thread.
+				// Just let the finally block clean the stuff and exit.
+				catch(ClosedByInterruptException e)	{  }
+				// if any socket operation fails
+				catch (IOException e)  { e.printStackTrace(); }
+				finally {
+					// threads already dead will not feel the interrupt =)
+					for(Thread t : this.clientThreads) { t.interrupt(); }
+					try { this.fsSocket.close(); }
+					// if closing the socket fails
+					catch (IOException e) { e.printStackTrace(); }
+				}
 		}
 	}
+	
+	/**
+	 * Method that returns the Runnable that will handle a client connection.
+	 * @param clientConnection - the client connection.
+	 * @return a runnable object.
+	 */
+	public Runnable getClientRunnable(final Socket clientConnection) {
+		return new Runnable() {
+			
+			/**
+			 * The actual code that handles a client connection.
+			 * The thread running this code will be in an infinite loop waiting
+			 * for requests to arrive. Once a request arrives, it is executed
+			 * and a future object will have a listener ready to react when the
+			 * answer is ready (which is handled by other thread).
+			 * 
+			 * The communication protocol is simple: 
+			 * - this thread listens for incoming objects and executes requests 
+			 * over the DHT;
+			 * - the future listener answer to the client connection;
+			 * Note that if the client issues multiple requests at the same time,
+			 * we don't assure ordering! 
+			 */
+			@Override
+			public void run() {
+				try {
+					while(!clientConnection.isClosed()) {
+						RequestDTO dto = 
+								(RequestDTO)new ObjectInputStream(clientConnection.getInputStream()).
+								readObject();
+						// FIXME: this call should be synchronized just for safety.
+						dto.execute(peer, clientConnection);
+					}
+				}
+				// This is the standard procedure to stop this thread.
+				// Just let the finally block clean the stuff and exit.
+				catch(ClosedByInterruptException e)	{  }
+				// if any socket operation fails
+				catch (IOException e) {	e.printStackTrace(); } 
+				// if in.readObject fails
+				catch (ClassNotFoundException e) { e.printStackTrace();	}
+				finally {
+					try { clientConnection.close(); }
+					// if closing the socket fails
+					catch (IOException e) { e.printStackTrace(); }
+				}
+			}
+		};
+	}
+	
 }
