@@ -7,8 +7,7 @@ import java.net.Socket;
  */
 public class RemoteBridgeState extends BridgeState {
 
-	public RemoteBridgeState(KademliaBridge bridge) {
-		super(bridge);
+	public RemoteBridgeState() {
 		// TODO Auto-generated constructor stub
 	}
 

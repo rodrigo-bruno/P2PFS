@@ -177,10 +177,10 @@ public class PeerThread extends Thread {
 	 * @param peerId
 	 * @throws IOException
 	 */
-	public PeerThread(String peerId) throws IOException {
+	public PeerThread(Number160 peerId) throws IOException {
 		super("PeerThread");
 		// setup the dht connection
-        peer = new PeerMaker(Number160.createHash(peerId)).
+        peer = new PeerMaker(peerId).
         		setPorts(this.dhtPort).
         		setBindings(new Bindings(this.iface)).
         		makeAndListen();
@@ -227,9 +227,14 @@ public class PeerThread extends Thread {
 				finally {
 					// threads already dead will not feel the interrupt =)
 					for(Thread t : this.clientThreads) { t.interrupt(); }
-					try { this.fsSocket.close(); }
+					try { 
+						this.fsSocket.close();
+						for(Thread t : this.clientThreads) { t.join(); }
+					}
+					// if this thread is interrupted while performing a join
+					catch (InterruptedException e) { e.printStackTrace(); }
 					// if closing the socket fails
-					catch (IOException e) { e.printStackTrace(); }
+					catch (IOException e) { e.printStackTrace(); } 
 				}
 		}
 	}
