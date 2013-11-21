@@ -8,6 +8,11 @@ package p2pfs.filesystem.types.dto;
 public class ExceptionDTO extends FileSystemDTO {
 
 	/**
+	 * Serialization id. 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+	/**
 	 * Constructor. 
 	 * @param trowable - the exception
 	 */

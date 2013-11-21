@@ -1,5 +1,8 @@
 package p2pfs.filesystem.bridges.dht;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 
 import p2pfs.filesystem.Main;
@@ -23,14 +26,31 @@ public abstract class BridgeState {
 	protected Socket socket = null;
 	
 	/**
+	 * Object streams. This streams should be used to write and read from 
+	 * the socket.
+	 */
+	ObjectInputStream ois = null;
+	ObjectOutputStream oos = null;
+	
+	/**
 	 * Constructor.
 	 */
-	public BridgeState() { this.bridge = Main.getKademliaBridge(); }
+	public BridgeState() 
+	{ this.bridge = Main.getKademliaBridge(); }
 	
 	/**
 	 * The method that returns the socket to be used for the current request.
+	 * This method might be deleted in future since it is not needed (just for
+	 * debug).
 	 * @return - a client socket.
 	 */
 	public abstract Socket getPeerSocket();
+	/**
+	 * Methods that return the input and output streams.
+	 * @return - object streams.
+	 * @throws IOException  - due to the creation of the streams.
+	 */
+	public abstract ObjectInputStream getPeerOIS() throws IOException;
+	public abstract ObjectOutputStream getPeerOOS() throws IOException;
 
 }

@@ -1,9 +1,6 @@
 package p2pfs.filesystem.bridges.dht;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-
 import p2pfs.filesystem.types.dto.ExceptionDTO;
 import p2pfs.filesystem.types.dto.FileSystemDTO;
 import p2pfs.filesystem.types.dto.GetDTO;
@@ -42,14 +39,11 @@ public class KademliaBridge {
 	 * is more general than the other two).
 	 */
 	public Object get(Number160 locationKey) throws Throwable { 
-		// creating streams
-		ObjectOutputStream out = new ObjectOutputStream(this.state.getPeerSocket().getOutputStream());
-		ObjectInputStream in = new ObjectInputStream(this.state.getPeerSocket().getInputStream());
 		// writing request.
-		out.writeObject(new GetDTO(locationKey));
-		out.flush();
+		this.state.getPeerOOS().writeObject(new GetDTO(locationKey));
+		this.state.getPeerOOS().flush();
 		// waiting and reading the answer.
-		FileSystemDTO fsDTO = (FileSystemDTO) in.readObject();
+		FileSystemDTO fsDTO = (FileSystemDTO) this.state.getPeerOIS().readObject();
 		// test for exception.
 		if(fsDTO instanceof ExceptionDTO) {
 			Throwable t = (Throwable) fsDTO.getObject();
@@ -65,16 +59,14 @@ public class KademliaBridge {
 	 * @throws ClassNotFoundException - problems casting the readObject method.
 	 * @throws Throwable - this throwable may come from the DHT (this exception
 	 * is more general than the other two).
+	 * @return boolean - if the operation was finished successfully or not.
 	 */
 	public void put(Number160 locationKey, Object value) throws Throwable {
-		// creating streams
-		ObjectOutputStream out = new ObjectOutputStream(this.state.getPeerSocket().getOutputStream());
-		ObjectInputStream in = new ObjectInputStream(this.state.getPeerSocket().getInputStream());
 		// writing request.
-		out.writeObject(new PutDTO(locationKey));
-		out.flush();
+		this.state.getPeerOOS().writeObject(new PutDTO(locationKey, value));
+		this.state.getPeerOOS().flush();
 		// waiting and reading the answer.
-		FileSystemDTO fsDTO = (FileSystemDTO) in.readObject();
+		FileSystemDTO fsDTO = (FileSystemDTO) this.state.getPeerOIS().readObject();
 		// test for exception.
 		if(fsDTO instanceof ExceptionDTO) {
 			Throwable t = (Throwable) fsDTO.getObject();

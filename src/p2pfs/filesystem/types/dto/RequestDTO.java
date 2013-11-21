@@ -1,6 +1,7 @@
 package p2pfs.filesystem.types.dto;
 
-import java.net.Socket;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 
 import net.tomp2p.futures.FutureDHT;
 import net.tomp2p.p2p.Peer;
@@ -13,6 +14,11 @@ import net.tomp2p.peers.Number160;
 public abstract class RequestDTO extends FileSystemDTO{
 	
 	/**
+	 * Serialization id. 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+	/**
 	 * Constructor.
 	 * @param locationKey
 	 */
@@ -23,10 +29,11 @@ public abstract class RequestDTO extends FileSystemDTO{
 	 * Method to implement by subclasses.
 	 * This method will receive the Peer in which the operation will be applied.
 	 * @param peer - the dht peer.
-	 * @param socket - where the answer will be written.
+	 * @param oos - where the answer will be written.
+	 * @throws IOException - see subclasses.
 	 * @return - a future object that will be used to hold the answer.
 	 */
-	public abstract FutureDHT execute(Peer peer, Socket socket);
+	public abstract FutureDHT execute(Peer peer, ObjectOutputStream oos) throws IOException;
 	
 	/**
 	 * Getter.

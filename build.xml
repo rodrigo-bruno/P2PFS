@@ -3,9 +3,10 @@
 
 	<property file="${basedir}/build.properties" />
 
-	<property name="main-class" value="examples.ExampleSimple" />
-	<property name="java-args-1" value="0 test.me 127.0.0.1" />
-	<property name="java-args-2" value="1 test.me" />
+	<property name="main-example-class" value="examples.ExampleSimple" />
+	<property name="main-class" value="p2pfs.filesystem.Main" />
+	<property name="java-args-example-p1" value="0 test.me 127.0.0.1" />
+	<property name="java-args-example-p2" value="1 test.me" />
 	<property name="jar-name" value="p2pfs-2" />
 	
   <property name="src.dir" value="${basedir}/src"/>  	  
@@ -38,6 +39,7 @@
         includes="**/*.java"
         destdir="${build.classes}"
         optimize="${javac.optimize}"
+        debug="${javac.debug}"
     	  includeantruntime="false">
       <classpath refid="classpath"/>
     </javac>
@@ -48,6 +50,15 @@
     <copy todir="${build.classes}">
         <fileset dir="."><include name="logback.xml"/></fileset>
     </copy>
+  </target>
+
+  <target name="jar-example" depends="compile" description="Make jar">
+    <property name="jar.properties.list" value="log4j.properties, slf4.properties"/>
+    <jar jarfile="${build.dir}/${jar-name}.jar" basedir="${build.classes}">
+      <manifest>
+          <attribute name="Main-Class" value="${main-example-class}"/>
+      </manifest>
+    </jar>
   </target>
 
   <target name="jar" depends="compile" description="Make jar">
@@ -63,15 +74,19 @@
 	  <delete dir="${build.classes}" includeEmptyDirs="true" followSymlinks="false" />
 	</target>
 	
-  <target name="run-1" depends="jar">
+  <target name="run-example-p1" depends="jar-example">
     <java jar="${build.dir}/${jar-name}.jar" fork="true">
-      <arg line="${java-args-1}"/>
+      <arg line="${java-args-example-p1}"/>
     </java>
   </target>
 	
-  <target name="run-2" depends="jar">
+  <target name="run-example-p2" depends="jar-example">
     <java jar="${build.dir}/${jar-name}.jar" fork="true">
-    	<arg line="${java-args-2}"/>
+    	<arg line="${java-args-example-p2}"/>
     </java>
+  </target>
+	
+  <target name="run-p1" depends="jar">
+    <java jar="${build.dir}/${jar-name}.jar" fork="true"></java>
   </target>
 </project>

@@ -19,7 +19,8 @@ public class Main {
 	private static PeerThread PEER_THREAD = null;
 	
 	/**
-	 * 
+	 * Kademlia Bridge implementation. This object will be used to abstract the
+	 * socket access to the peer thread.
 	 */
 	private static KademliaBridge KADEMLIA_BRIDGE = null;
 	
@@ -39,6 +40,7 @@ public class Main {
 	 * @throws IOException - if something happens during the initPeerThread method.
 	 */
 	public static void main(String[] args) throws IOException {
+		try{
 		// means that we need to mount the FS
 		if(args.length == 2) {
 			Main.USERNAME = args[0];
@@ -52,24 +54,27 @@ public class Main {
 					"java -jar p2pfs.jar <username> <mountpoint> " +
 					"(will mount the P2PFS on the local FS and host files");
 		} else {
+
+			System.out.println("Starting Initialization Process");
 			Main.initPeerThread();
+			System.out.println("Init Peer Thread -> Done");
+
 			Main.KADEMLIA_BRIDGE = new KademliaBridge(new LocalBridgeState());
+			System.out.println("Init Kademlia Bridge -> Done");
+
+			Main.KADEMLIA_BRIDGE.put(Number160.createHash("key"), "value");
+			System.out.println("Inserting <key,value> -> Done");
+			
+			Object value = Main.KADEMLIA_BRIDGE.get(Number160.createHash("key"));
+			System.out.println("Retrieving <"+value+"> -> Done");
 		}
 		// Shutdown mechanism and protection.
-		Runtime.getRuntime().addShutdownHook(new Thread() {
-			/**
-			 * The method responsible for cleaning all threads and sockets.
-			 */
-			@Override
-			public void run() { 
-				if(Main.PEER_THREAD != null) { Main.PEER_THREAD.interrupt(); }
-				// TODO: check if it is necessary to close the KademliaBridge socket.
-				try { Main.PEER_THREAD.join(); }
-				// this exception will hardly happen (if we receive an interrupt
-				// exception while performing the join).
-				catch (InterruptedException e) { e.printStackTrace(); }
-			}
-		});
+		Runtime.getRuntime().addShutdownHook(Main.getShutdownThread());
+		} 
+		catch(IOException e) { throw e; }
+		// some exception might be thrown from the host side (put operation)
+		catch (Throwable e) { e.printStackTrace(); }
+		finally { Main.getShutdownThread().start(); }
 	}
 	
 	/**
@@ -87,6 +92,29 @@ public class Main {
 		// For the ones only hosting files a random id does the job.
 		else
 		{ Main.PEER_THREAD = new PeerThread(new Number160(new Random())); }
+		System.out.println("Peer Thread Creation -> Done");
+		Main.PEER_THREAD.start();
+	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public static Thread getShutdownThread() {
+		return new Thread() {
+			/**
+			 * The method responsible for cleaning all threads and sockets.
+			 */
+			@Override
+			public void run() { 
+				if(Main.PEER_THREAD != null) { Main.PEER_THREAD.interrupt(); }
+				// TODO: check if it is necessary to close the KademliaBridge socket.
+				try { Main.PEER_THREAD.join(); }
+				// this exception will hardly happen (if we receive an interrupt
+				// exception while performing the join).
+				catch (InterruptedException e) { e.printStackTrace(); }
+			}
+		};
 	}
 	
 	/**

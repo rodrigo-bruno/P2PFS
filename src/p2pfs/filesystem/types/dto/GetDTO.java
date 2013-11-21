@@ -1,7 +1,6 @@
 package p2pfs.filesystem.types.dto;
 
-import java.net.Socket;
-
+import java.io.ObjectOutputStream;
 import p2pfs.filesystem.PeerThread;
 import net.tomp2p.futures.FutureDHT;
 import net.tomp2p.p2p.Peer;
@@ -13,6 +12,11 @@ import net.tomp2p.peers.Number160;
 public class GetDTO extends RequestDTO {
 
 	/**
+	 * Serialization id. 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+	/**
 	 * Constructor. 
 	 * @param locationKey
 	 */
@@ -23,10 +27,10 @@ public class GetDTO extends RequestDTO {
 	 * See base class documentation.
 	 */
 	@Override
-	public FutureDHT execute(Peer peer, Socket socket) 
+	public FutureDHT execute(Peer peer, ObjectOutputStream oos) 
 	{ return peer.
 			get(this.getLocationKey()).
 			start().
-			addListener(new PeerThread.GetFuture(socket)); }
+			addListener(new PeerThread.GetFuture(oos)); }
 
 }

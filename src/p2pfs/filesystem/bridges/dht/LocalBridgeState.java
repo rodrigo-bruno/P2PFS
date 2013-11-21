@@ -1,6 +1,8 @@
 package p2pfs.filesystem.bridges.dht;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
@@ -25,5 +27,24 @@ public class LocalBridgeState extends BridgeState {
 	@Override
 	public Socket getPeerSocket() { return this.socket; }
 
+	/**
+	 * see base doc.
+	 */
+	@Override
+	public ObjectInputStream getPeerOIS() throws IOException {
+		if (this.ois == null)
+		{ this.ois = new ObjectInputStream(this.socket.getInputStream()); }
+		return this.ois;
+	}
+
+	/**
+	 * see base doc.
+	 */
+	@Override
+	public ObjectOutputStream getPeerOOS() throws IOException {
+		if (this.oos == null)
+		{ this.oos = new ObjectOutputStream(this.socket.getOutputStream()); }
+		return this.oos;
+	}
 
 }

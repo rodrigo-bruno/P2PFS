@@ -6,6 +6,11 @@ package p2pfs.filesystem.types.dto;
 public class OperationCompleteDTO extends FileSystemDTO {
 
 	/**
+	 * Serialization id. 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+	/**
 	 * Status of the operation. Can be successful or failed.
 	 */
 	private boolean status;

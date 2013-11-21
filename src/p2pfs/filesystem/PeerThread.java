@@ -37,16 +37,16 @@ public class PeerThread extends Thread {
 	public static abstract class FSFuture implements BaseFutureListener<FutureDHT> {
 		
 		/**
-		 * Client Socket. Used to send the answer.
+		 * Client object output stream. Used to send the answer.
 		 */
-		protected Socket clientConnection;
+		protected ObjectOutputStream oos;
 		
 		/**
 		 * Constructor. 
 		 * @param clientConnection
 		 */
-		public FSFuture(Socket clientConnection) 
-		{ this.clientConnection = clientConnection; }
+		public FSFuture(ObjectOutputStream oos) 
+		{ this.oos = oos; }
 
 		/**
 		 * Default method for handling exceptions.
@@ -55,10 +55,8 @@ public class PeerThread extends Thread {
 		 */
 		@Override
 		public void exceptionCaught(Throwable t) throws Exception {
-			ObjectOutputStream out = 
-					new ObjectOutputStream(this.clientConnection.getOutputStream());
-			out.writeObject(new ExceptionDTO(t));
-			out.flush();
+			oos.writeObject(new ExceptionDTO(t));
+			oos.flush();
 		}
 	}
 	
@@ -71,8 +69,8 @@ public class PeerThread extends Thread {
 		 * Constructor. 
 		 * @param clientConnection
 		 */
-		public GetFuture(Socket clientConnection) 
-		{ super(clientConnection); }
+		public GetFuture(ObjectOutputStream oos) 
+		{ super(oos); }
 
 		/**
 		 * Method that will be called when a get operation completes.
@@ -83,14 +81,12 @@ public class PeerThread extends Thread {
 		 */
 		@Override
 		public void operationComplete(FutureDHT future) throws Exception {
-			ObjectOutputStream out = 
-					new ObjectOutputStream(this.clientConnection.getOutputStream());
 			if(future.isSuccess()) {
-				out.writeObject(new OperationCompleteDTO(future.getData().getObject(), true));
+				oos.writeObject(new OperationCompleteDTO(future.getData().getObject(), true));
 			} else {
-				out.writeObject(new OperationCompleteDTO(null, false));
+				oos.writeObject(new OperationCompleteDTO(null, false));
 			}
-			out.flush();
+			oos.flush();
 		}
 	}
 	
@@ -103,8 +99,8 @@ public class PeerThread extends Thread {
 		 * Constructor.
 		 * @param clientConnection
 		 */
-		public PutFuture(Socket clientConnection) 
-		{ super(clientConnection); }
+		public PutFuture(ObjectOutputStream oos) 
+		{ super(oos); }
 
 		/**
 		 * Method that will be called when a put operation completes.
@@ -116,10 +112,8 @@ public class PeerThread extends Thread {
 		 */
 		@Override
 		public void operationComplete(FutureDHT future) throws Exception {
-			ObjectOutputStream out = 
-					new ObjectOutputStream(this.clientConnection.getOutputStream());
-			out.writeObject(new OperationCompleteDTO(null, future.isSuccess()));
-			out.flush();
+			oos.writeObject(new OperationCompleteDTO(null, future.isSuccess()));
+			oos.flush();
 		}
 	}
 	
@@ -140,6 +134,7 @@ public class PeerThread extends Thread {
 	
 	/**
 	 * Network interface to be used by the DHT implementation.
+	 * FIXME: check if this is necessary.
 	 */
 	final private String iface = "eth0";
 	
@@ -182,7 +177,7 @@ public class PeerThread extends Thread {
 		// setup the dht connection
         peer = new PeerMaker(peerId).
         		setPorts(this.dhtPort).
-        		setBindings(new Bindings(this.iface)).
+        		setBindings(new Bindings()).
         		makeAndListen();
         for(String addr : this.bootstrapNodes) {
             FutureBootstrap fb = peer.
@@ -211,31 +206,33 @@ public class PeerThread extends Thread {
 	 */
 	@Override
 	public void run() {
-		while(true) {
-				try {
-					Thread t = new Thread(
-									this.getClientRunnable(
-											this.fsSocket.accept()));
-					this.clientThreads.add(t);	
-					t.run();
-				}
-				// This is the standard procedure to stop this thread.
-				// Just let the finally block clean the stuff and exit.
-				catch(ClosedByInterruptException e)	{  }
-				// if any socket operation fails
-				catch (IOException e)  { e.printStackTrace(); }
-				finally {
-					// threads already dead will not feel the interrupt =)
-					for(Thread t : this.clientThreads) { t.interrupt(); }
-					try { 
-						this.fsSocket.close();
-						for(Thread t : this.clientThreads) { t.join(); }
-					}
-					// if this thread is interrupted while performing a join
-					catch (InterruptedException e) { e.printStackTrace(); }
-					// if closing the socket fails
-					catch (IOException e) { e.printStackTrace(); } 
-				}
+		try {
+			while(true) {
+				System.out.println("Running like a horse!");
+				Thread t = new Thread(
+						this.getClientRunnable(
+								this.fsSocket.accept()));
+				this.clientThreads.add(t);	
+				t.start();
+				System.out.println("New client!");
+			}
+		}
+		// This is the standard procedure to stop this thread.
+		// Just let the finally block clean the stuff and exit.
+		catch(ClosedByInterruptException e)	{  }
+		// if any socket operation fails
+		catch (IOException e)  { e.printStackTrace(); }
+		finally {
+			// threads already dead will not feel the interrupt =)
+			for(Thread t : this.clientThreads) { t.interrupt(); }
+			try { 
+				this.fsSocket.close();
+				for(Thread t : this.clientThreads) { t.join(); }
+			}
+			// if this thread is interrupted while performing a join
+			catch (InterruptedException e) { e.printStackTrace(); }
+			// if closing the socket fails
+			catch (IOException e) { e.printStackTrace(); } 
 		}
 	}
 	
@@ -264,12 +261,12 @@ public class PeerThread extends Thread {
 			@Override
 			public void run() {
 				try {
+					ObjectInputStream ois = new ObjectInputStream(clientConnection.getInputStream());
+					ObjectOutputStream oos = new ObjectOutputStream(clientConnection.getOutputStream());
 					while(!clientConnection.isClosed()) {
-						RequestDTO dto = 
-								(RequestDTO)new ObjectInputStream(clientConnection.getInputStream()).
-								readObject();
+						RequestDTO dto = (RequestDTO)ois.readObject();
 						// FIXME: this call should be synchronized just for safety.
-						dto.execute(peer, clientConnection);
+						dto.execute(peer, oos);
 					}
 				}
 				// This is the standard procedure to stop this thread.
