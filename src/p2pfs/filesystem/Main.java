@@ -33,10 +33,16 @@ public class Main {
 	 * The place where the file system will be mounted.
 	 */
 	public static String MOUNTPOINT = null;
+	
+	/**
+	 * Arrays of addresses for the bootstraping nodes.
+	 * FIXME: this should be loaded from a config file.
+	 */
+	final static String[] bootstrapNodes = {"127.0.0.1"};
 
 	/**
 	 * Main method.
-	 * @param args - accepted scenarios: {} | {username mountpoint}
+	 * @param args - accepted scenarios: [username mountpoint]+
 	 * @throws IOException - if something happens during the initPeerThread method.
 	 */
 	public static void main(String[] args) throws IOException {
@@ -88,10 +94,14 @@ public class Main {
 		// Using the username as the key for the peer and its own files is going
 		// to be more efficient when accessing to data!
 		if(Main.USERNAME != null)
-		{ Main.PEER_THREAD = new PeerThread(Number160.createHash(Main.USERNAME)); }
+		{ Main.PEER_THREAD = new PeerThread(
+				Number160.createHash(Main.USERNAME), 
+				Main.bootstrapNodes); }
 		// For the ones only hosting files a random id does the job.
 		else
-		{ Main.PEER_THREAD = new PeerThread(new Number160(new Random())); }
+		{ Main.PEER_THREAD = new PeerThread(
+				new Number160(new Random()), 
+				Main.bootstrapNodes); }
 		System.out.println("Peer Thread Creation -> Done");
 		Main.PEER_THREAD.start();
 	}
@@ -103,7 +113,7 @@ public class Main {
 	public static Thread getShutdownThread() {
 		return new Thread() {
 			/**
-			 * The method responsible for cleaning all threads and sockets.
+			 * The method responsible for cleaning all threads.
 			 */
 			@Override
 			public void run() { 
@@ -120,6 +130,5 @@ public class Main {
 	/**
 	 * Getters.
 	 */
-	public static PeerThread getPeerThread() { return Main.PEER_THREAD; }
 	public static KademliaBridge getKademliaBridge() { return Main.KADEMLIA_BRIDGE; }
 }

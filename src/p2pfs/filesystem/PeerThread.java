@@ -6,6 +6,8 @@ import java.io.ObjectOutputStream;
 import java.net.Inet4Address;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.ArrayList;
 import p2pfs.filesystem.types.dto.ExceptionDTO;
@@ -45,8 +47,7 @@ public class PeerThread extends Thread {
 		 * Constructor. 
 		 * @param clientConnection
 		 */
-		public FSFuture(ObjectOutputStream oos) 
-		{ this.oos = oos; }
+		public FSFuture(ObjectOutputStream oos) { this.oos = oos; }
 
 		/**
 		 * Default method for handling exceptions.
@@ -69,8 +70,7 @@ public class PeerThread extends Thread {
 		 * Constructor. 
 		 * @param clientConnection
 		 */
-		public GetFuture(ObjectOutputStream oos) 
-		{ super(oos); }
+		public GetFuture(ObjectOutputStream oos) { super(oos); }
 
 		/**
 		 * Method that will be called when a get operation completes.
@@ -130,7 +130,7 @@ public class PeerThread extends Thread {
 	/**
 	 * Arrays of addresses for the bootstraping nodes.
 	 */
-	final private String[] bootstrapNodes = {"127.0.0.1"};
+	final private String[] bootstrapNodes;
 	
 	/**
 	 * Network interface to be used by the DHT implementation.
@@ -167,13 +167,19 @@ public class PeerThread extends Thread {
 	private ArrayList<Thread> clientThreads = null; 
 	
 	/**
+	 * Flag that indicates if the thread was interrupted.
+	 */
+	private boolean interrupted = false;
+	
+	/**
 	 * Constructor.
 	 * Tries to enter the DHT.
 	 * @param peerId
 	 * @throws IOException
 	 */
-	public PeerThread(Number160 peerId) throws IOException {
+	public PeerThread(Number160 peerId, String[] bootstrapNodes) throws IOException {
 		super("PeerThread");
+		this.bootstrapNodes = bootstrapNodes;
 		// setup the dht connection
         peer = new PeerMaker(peerId).
         		setPorts(this.dhtPort).
@@ -207,34 +213,51 @@ public class PeerThread extends Thread {
 	@Override
 	public void run() {
 		try {
-			while(true) {
-				System.out.println("Running like a horse!");
-				Thread t = new Thread(
-						this.getClientRunnable(
-								this.fsSocket.accept()));
-				this.clientThreads.add(t);	
-				t.start();
-				System.out.println("New client!");
+			System.out.println("Peer Thread Running!");
+			this.fsSocket.setSoTimeout(1000);
+			while(	!this.fsSocket.isClosed() && 
+					!Thread.currentThread().isInterrupted()) {
+				Socket clientConnection = null;
+				try { clientConnection = this.fsSocket.accept(); }
+				// This is the standard procedure to stop this thread.
+				// Just let the finally block clean the stuff and exit.
+				catch (SocketTimeoutException e) { }
+				if(clientConnection != null) {
+					Thread t = new Thread(this.getClientRunnable(clientConnection));
+					this.clientThreads.add(t);	
+					t.start();
+					System.out.println("New client!");
+				}
 			}
 		}
-		// This is the standard procedure to stop this thread.
-		// Just let the finally block clean the stuff and exit.
-		catch(ClosedByInterruptException e)	{  }
-		// if any socket operation fails
+		// if any other socket operation fails
 		catch (IOException e)  { e.printStackTrace(); }
 		finally {
+			System.out.println("Peer Thread Finalizing!");
 			// threads already dead will not feel the interrupt =)
 			for(Thread t : this.clientThreads) { t.interrupt(); }
 			try { 
 				this.fsSocket.close();
-				for(Thread t : this.clientThreads) { t.join(); }
+				this.peer.shutdown();
 			}
-			// if this thread is interrupted while performing a join
-			catch (InterruptedException e) { e.printStackTrace(); }
 			// if closing the socket fails
 			catch (IOException e) { e.printStackTrace(); } 
 		}
 	}
+	
+	/**
+	 * Re-implementation of the interrupt method.
+	 * We use this implementation because we don't want an exception. Note that
+	 * the peer.shutdown() may be blocking.
+	 */
+	@Override
+	public void interrupt() { this.interrupted = true; }
+	
+	/**
+	 * Re-implementation of the isInterrupted method.
+	 */
+	@Override
+	public boolean isInterrupted() { return this.interrupted; }
 	
 	/**
 	 * Method that returns the Runnable that will handle a client connection.
@@ -263,20 +286,25 @@ public class PeerThread extends Thread {
 				try {
 					ObjectInputStream ois = new ObjectInputStream(clientConnection.getInputStream());
 					ObjectOutputStream oos = new ObjectOutputStream(clientConnection.getOutputStream());
-					while(!clientConnection.isClosed()) {
-						RequestDTO dto = (RequestDTO)ois.readObject();
+					clientConnection.setSoTimeout(1000);
+					while(	!clientConnection.isClosed() && 
+							!Thread.currentThread().isInterrupted()) {
+						RequestDTO dto = null;
+						try { dto = (RequestDTO)ois.readObject(); }
+						// Don't worry, this exception will happen every second.
+						// This is used to make the thread check if it was 
+						// interrupted.
+						catch (SocketTimeoutException e) { }
 						// FIXME: this call should be synchronized just for safety.
-						dto.execute(peer, oos);
+						if (dto != null) { dto.execute(peer, oos); }
 					}
 				}
-				// This is the standard procedure to stop this thread.
-				// Just let the finally block clean the stuff and exit.
-				catch(ClosedByInterruptException e)	{  }
-				// if any socket operation fails
-				catch (IOException e) {	e.printStackTrace(); } 
 				// if in.readObject fails
 				catch (ClassNotFoundException e) { e.printStackTrace();	}
+				// if any socket operation fails
+				catch (IOException e) {	e.printStackTrace(); } 
 				finally {
+					System.out.println("Client killed!");
 					try { clientConnection.close(); }
 					// if closing the socket fails
 					catch (IOException e) { e.printStackTrace(); }
