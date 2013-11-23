@@ -31,6 +31,8 @@ public class KademliaBridge {
 	
 	/**
 	 * Get method to retrieve a value given a location key.
+	 * This method is synchronized since we might need to change to used socket
+	 * and we don't want to do it in the middle of an operation.
 	 * @param locationKey - the location key.
 	 * @return - the value.
 	 * @throws IOException - any problem with the socket connection.
@@ -38,22 +40,26 @@ public class KademliaBridge {
 	 * @throws Throwable - this throwable may come from the DHT (this exception
 	 * is more general than the other two).
 	 */
-	public Object get(Number160 locationKey) throws Throwable { 
-		// writing request.
-		this.state.getPeerOOS().writeObject(new GetDTO(locationKey));
-		this.state.getPeerOOS().flush();
-		// waiting and reading the answer.
-		FileSystemDTO fsDTO = (FileSystemDTO) this.state.getPeerOIS().readObject();
-		// test for exception.
-		if(fsDTO instanceof ExceptionDTO) {
-			Throwable t = (Throwable) fsDTO.getObject();
-			throw t;
-		}
-		// return the answered object.
-		return fsDTO.getObject(); }
+	public Object get(Number160 locationKey) throws Throwable {
+		synchronized(this) {
+			// writing request.
+			this.state.getPeerOOS().writeObject(new GetDTO(locationKey));
+			this.state.getPeerOOS().flush();
+			// waiting and reading the answer.
+			FileSystemDTO fsDTO = (FileSystemDTO) this.state.getPeerOIS().readObject();
+			// test for exception.
+			if(fsDTO instanceof ExceptionDTO) {
+				Throwable t = (Throwable) fsDTO.getObject();
+				throw t;
+			}
+			// return the answered object.
+			return fsDTO.getObject(); }
+	}
 	
 	/**
 	 * Put method to store a value give a location key.
+	 * This method is synchronized since we might need to change to used socket
+	 * and we don't want to do it in the middle of an operation.
 	 * @param locationKey - the location key.
 	 * @param value - the value to be stored.
 	 * @throws ClassNotFoundException - problems casting the readObject method.
@@ -62,22 +68,33 @@ public class KademliaBridge {
 	 * @return boolean - if the operation was finished successfully or not.
 	 */
 	public void put(Number160 locationKey, Object value) throws Throwable {
-		// writing request.
-		this.state.getPeerOOS().writeObject(new PutDTO(locationKey, value));
-		this.state.getPeerOOS().flush();
-		// waiting and reading the answer.
-		FileSystemDTO fsDTO = (FileSystemDTO) this.state.getPeerOIS().readObject();
-		// test for exception.
-		if(fsDTO instanceof ExceptionDTO) {
-			Throwable t = (Throwable) fsDTO.getObject();
-			throw t;
+		synchronized(this) {
+			// writing request.
+			this.state.getPeerOOS().writeObject(new PutDTO(locationKey, value));
+			this.state.getPeerOOS().flush();
+			// waiting and reading the answer.
+			FileSystemDTO fsDTO = (FileSystemDTO) this.state.getPeerOIS().readObject();
+			// test for exception.
+			if(fsDTO instanceof ExceptionDTO) {
+				Throwable t = (Throwable) fsDTO.getObject();
+				throw t;
+			}
 		}
 	}
 	
 	/**
 	 * Setter.
+	 * This method is synchronized since we might need to change to used socket
+	 * and we don't want to do it in the middle of an operation.
 	 * @param state - the new state.
 	 */
-	protected void setState(BridgeState state) { this.state = state; }
+	public void setState(BridgeState state) 
+	{ synchronized(this) { this.state = state; } }
+	
+	/**
+	 * Getter.
+	 */
+	public BridgeState getBridgeState() 
+	{ return this.state; }
 
 }

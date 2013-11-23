@@ -5,19 +5,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-import p2pfs.filesystem.Main;
-
 /**
  * Bridge state represents the state of the bridge: local or remote.
  * (check KademliaBridge documentation for more info.)
  */
 public abstract class BridgeState {
-	
-	/**
-	 * A reference to the actual bridge.
-	 * This is here so that states can be exchanged by their own.
-	 */
-	protected KademliaBridge bridge = null;
 	
 	/**
 	 * The socket that will be used to make requests to the thread that is 
@@ -35,13 +27,10 @@ public abstract class BridgeState {
 	/**
 	 * Constructor.
 	 */
-	public BridgeState() 
-	{ this.bridge = Main.getKademliaBridge(); }
+	public BridgeState() { }	
 	
 	/**
 	 * The method that returns the socket to be used for the current request.
-	 * This method might be deleted in future since it is not needed (just for
-	 * debug).
 	 * @return - a client socket.
 	 */
 	public abstract Socket getPeerSocket();

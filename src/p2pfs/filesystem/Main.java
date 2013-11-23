@@ -5,6 +5,7 @@ import java.util.Random;
 
 import p2pfs.filesystem.bridges.dht.KademliaBridge;
 import p2pfs.filesystem.bridges.dht.LocalBridgeState;
+import p2pfs.filesystem.bridges.dht.RemoteBridgeState;
 
 import net.tomp2p.peers.Number160;
 
@@ -38,7 +39,14 @@ public class Main {
 	 * Arrays of addresses for the bootstraping nodes.
 	 * FIXME: this should be loaded from a config file.
 	 */
-	final static String[] bootstrapNodes = {"127.0.0.1"};
+	final public static String[] BOOTSTRAP_NODES = {"127.0.0.1"};
+	
+	/**
+	 * Time in milliseconds until a node using a remote bridge state changes to 
+	 * a local one.
+	 * FIXME: this should be loaded from a config file.
+	 */
+	final private static int remoteStateTime = 1*60*1000; 
 
 	/**
 	 * Main method.
@@ -51,16 +59,19 @@ public class Main {
 		if(args.length == 2) {
 			Main.USERNAME = args[0];
 			Main.MOUNTPOINT = args[1];
-			// TODO - implement the RemoteBridgeState and complete this code.
-			System.out.println("WARNING: not implemented yet.");
-		} else if(args.length == 1) {
-			System.out.println("Wrong arguments! Possible scenarios:");
-			System.out.println("java -jar p2pfs.jar (will only host files)");
-			System.out.println(
-					"java -jar p2pfs.jar <username> <mountpoint> " +
-					"(will mount the P2PFS on the local FS and host files");
-		} else {
-
+			Thread t = Main.getBridgeStateThread();
+			t.setDaemon(true);
+			t.start();
+			System.out.println("Starting Bridge State Thread");
+			
+			Main.KADEMLIA_BRIDGE = new KademliaBridge(new RemoteBridgeState());
+			System.out.println("Init Kademlia Bridge -> Done");			
+			
+			String value = (String) Main.KADEMLIA_BRIDGE.get(Number160.createHash("key"));
+			System.out.println("Retrieving <"+value+"> -> Done");
+		} 
+		// means that we are only hosting files
+		else if(args.length == 0) {
 			System.out.println("Starting Initialization Process");
 			Main.initPeerThread();
 			System.out.println("Init Peer Thread -> Done");
@@ -71,8 +82,16 @@ public class Main {
 			Main.KADEMLIA_BRIDGE.put(Number160.createHash("key"), "value");
 			System.out.println("Inserting <key,value> -> Done");
 			
-			Object value = Main.KADEMLIA_BRIDGE.get(Number160.createHash("key"));
+			String value = (String) Main.KADEMLIA_BRIDGE.get(Number160.createHash("key"));
 			System.out.println("Retrieving <"+value+"> -> Done");
+			
+			Thread.sleep(2*60*1000);
+			
+		} 
+		// error case
+		else {
+			System.out.println("Wrong arguments!");
+			System.out.println("java -jar p2pfs.jar [username mountpoint]+");
 		}
 		// Shutdown mechanism and protection.
 		Runtime.getRuntime().addShutdownHook(Main.getShutdownThread());
@@ -94,20 +113,16 @@ public class Main {
 		// Using the username as the key for the peer and its own files is going
 		// to be more efficient when accessing to data!
 		if(Main.USERNAME != null)
-		{ Main.PEER_THREAD = new PeerThread(
-				Number160.createHash(Main.USERNAME), 
-				Main.bootstrapNodes); }
+		{ Main.PEER_THREAD = new PeerThread(Number160.createHash(Main.USERNAME)); }
 		// For the ones only hosting files a random id does the job.
 		else
-		{ Main.PEER_THREAD = new PeerThread(
-				new Number160(new Random()), 
-				Main.bootstrapNodes); }
+		{ Main.PEER_THREAD = new PeerThread(new Number160(new Random())); }
 		System.out.println("Peer Thread Creation -> Done");
 		Main.PEER_THREAD.start();
 	}
 	
 	/**
-	 * 
+	 * Method that returns the thread responsible for cleaning all threads.
 	 * @return
 	 */
 	public static Thread getShutdownThread() {
@@ -117,18 +132,48 @@ public class Main {
 			 */
 			@Override
 			public void run() { 
-				if(Main.PEER_THREAD != null) { Main.PEER_THREAD.interrupt(); }
-				// TODO: check if it is necessary to close the KademliaBridge socket.
-				try { Main.PEER_THREAD.join(); }
+				try { 
+					Main.KADEMLIA_BRIDGE.getBridgeState().getPeerSocket().close();
+					if(Main.PEER_THREAD != null) { 
+						Main.PEER_THREAD.interrupt();
+						Main.PEER_THREAD.join();
+					} 
+				}
 				// this exception will hardly happen (if we receive an interrupt
 				// exception while performing the join).
 				catch (InterruptedException e) { e.printStackTrace(); }
+				// if any problem happens during the Kademlia Bridge socket closing.
+				catch (IOException e) {	e.printStackTrace(); }
 			}
 		};
 	}
 	
 	/**
-	 * Getters.
+	 * Thread that is counting the time until we change the remote bridge state
+	 * to local (joining the DHT).
+	 * @return
 	 */
-	public static KademliaBridge getKademliaBridge() { return Main.KADEMLIA_BRIDGE; }
+	public static Thread getBridgeStateThread() {
+		return new Thread(new Runnable() {
+			
+			/**
+			 * Method that does the job.
+			 * After sleeping it starts by initializing the Peer Thread and then
+			 * setting the Kademlia Bridge to local state.
+			 */
+			@Override
+			public void run() {
+				try {
+					Thread.sleep(Main.remoteStateTime);
+					Main.initPeerThread();
+					Main.KADEMLIA_BRIDGE.setState(new LocalBridgeState());
+				} 
+				// if the thread is interrupted while sleeping.
+				catch (InterruptedException e) { e.printStackTrace(); }
+				// if something happens during the peer thread initialization.
+				catch (IOException e) { e.printStackTrace(); }
+				
+			}	
+		});
+	}
 }

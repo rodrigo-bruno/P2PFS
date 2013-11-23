@@ -6,6 +6,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
+import p2pfs.filesystem.Main;
 import p2pfs.filesystem.PeerThread;
 
 /**
@@ -22,11 +23,11 @@ public class RemoteBridgeState extends BridgeState {
 	 * @throws UnknownHostException - if there is some problem finding the host.
 	 * @throws IOException - any problem regarding the socket establishment.
 	 */
-	public RemoteBridgeState(final String[] bootstrapNodes) 
+	public RemoteBridgeState() 
 			throws UnknownHostException, IOException {
 		// TODO: get a random bootstrapNode and try others if the first one fails.
 		// TODO: try to connect to the node with the user name.
-		this.socket = new Socket(bootstrapNodes[0], PeerThread.FILESYSTEM_PORT); 
+		this.socket = new Socket(Main.BOOTSTRAP_NODES[0], PeerThread.FILESYSTEM_PORT); 
 	}
 
 	/**
@@ -35,7 +36,6 @@ public class RemoteBridgeState extends BridgeState {
 	@Override
 	public Socket getPeerSocket() { return this.socket; }
 
-	// TODO: check time to change state!
 	/**
 	 * see base doc.
 	 */

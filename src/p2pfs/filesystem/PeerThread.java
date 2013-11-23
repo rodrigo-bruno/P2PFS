@@ -1,5 +1,6 @@
 package p2pfs.filesystem;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -128,11 +129,6 @@ public class PeerThread extends Thread {
 	final private int dhtPort = 9999;
 	
 	/**
-	 * Arrays of addresses for the bootstraping nodes.
-	 */
-	final private String[] bootstrapNodes;
-	
-	/**
 	 * Network interface to be used by the DHT implementation.
 	 * FIXME: check if this is necessary.
 	 */
@@ -177,15 +173,14 @@ public class PeerThread extends Thread {
 	 * @param peerId
 	 * @throws IOException
 	 */
-	public PeerThread(Number160 peerId, String[] bootstrapNodes) throws IOException {
+	public PeerThread(Number160 peerId) throws IOException {
 		super("PeerThread");
-		this.bootstrapNodes = bootstrapNodes;
 		// setup the dht connection
         peer = new PeerMaker(peerId).
         		setPorts(this.dhtPort).
         		setBindings(new Bindings()).
         		makeAndListen();
-        for(String addr : this.bootstrapNodes) {
+        for(String addr : Main.BOOTSTRAP_NODES) {
             FutureBootstrap fb = peer.
             		bootstrap().
             		setInetAddress(Inet4Address.getByName(addr)).
@@ -299,6 +294,8 @@ public class PeerThread extends Thread {
 						if (dto != null) { dto.execute(peer, oos); }
 					}
 				}
+				// if the client side closes the socket.
+				catch(EOFException e) { }
 				// if in.readObject fails
 				catch (ClassNotFoundException e) { e.printStackTrace();	}
 				// if any socket operation fails
