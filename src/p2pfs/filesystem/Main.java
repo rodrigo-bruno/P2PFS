@@ -3,9 +3,10 @@ package p2pfs.filesystem;
 import java.io.IOException;
 import java.util.Random;
 
-import p2pfs.filesystem.bridges.dht.KademliaBridge;
-import p2pfs.filesystem.bridges.dht.LocalBridgeState;
-import p2pfs.filesystem.bridges.dht.RemoteBridgeState;
+import p2pfs.filesystem.layers.bridge.KademliaBridge;
+import p2pfs.filesystem.layers.bridge.LocalBridgeState;
+import p2pfs.filesystem.layers.bridge.RemoteBridgeState;
+import p2pfs.filesystem.layers.host.PeerThread;
 
 import net.tomp2p.peers.Number160;
 

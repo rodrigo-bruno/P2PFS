@@ -1,4 +1,4 @@
-package p2pfs.filesystem.bridges.fuse;
+package p2pfs.filesystem.layers.cache;
 
 /**
  * SimpleBridgeImpl means that the file system API implementation has no 

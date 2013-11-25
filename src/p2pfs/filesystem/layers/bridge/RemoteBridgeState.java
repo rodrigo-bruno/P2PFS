@@ -1,4 +1,4 @@
-package p2pfs.filesystem.bridges.dht;
+package p2pfs.filesystem.layers.bridge;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -6,20 +6,29 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-import p2pfs.filesystem.PeerThread;
+import p2pfs.filesystem.Main;
+import p2pfs.filesystem.layers.host.*;
 
 /**
- * LocalBridgeState means that this node will have local access to the DHT.
+ * RemoteBridgeState means that this node will not have local access to the DHT.
+ * This class will try to connect to the closest node which has the username
+ * info stored.
+ * It will also check if it is time to change to a LocalBridgeState. If it is the
+ * case, it will perform the change.
  */
-public class LocalBridgeState extends BridgeState {
+public class RemoteBridgeState extends BridgeState {
 
 	/**
-	 * Constructor - creates a socket connection to the local peer thread.
+	 * Constructor - creates a socket connection to the remote peer thread.
 	 * @throws UnknownHostException - if there is some problem finding the host.
 	 * @throws IOException - any problem regarding the socket establishment.
 	 */
-	public LocalBridgeState() throws UnknownHostException, IOException
-	{ this.socket = new Socket("localhost", PeerThread.FILESYSTEM_PORT); }
+	public RemoteBridgeState() 
+			throws UnknownHostException, IOException {
+		// TODO: get a random bootstrapNode and try others if the first one fails.
+		// TODO: try to connect to the node with the user name.
+		this.socket = new Socket(Main.BOOTSTRAP_NODES[0], PeerThread.FILESYSTEM_PORT); 
+	}
 
 	/**
 	 * see base doc.
@@ -46,5 +55,6 @@ public class LocalBridgeState extends BridgeState {
 		{ this.oos = new ObjectOutputStream(this.socket.getOutputStream()); }
 		return this.oos;
 	}
+
 
 }

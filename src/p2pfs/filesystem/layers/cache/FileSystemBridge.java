@@ -1,7 +1,4 @@
-/**
- * 
- */
-package p2pfs.filesystem.bridges.fuse;
+package p2pfs.filesystem.layers.cache;
 
 /**
  * FileSystemBridge is the abstract class representing the integration layer 

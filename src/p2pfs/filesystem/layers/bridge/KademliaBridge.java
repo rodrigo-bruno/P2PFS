@@ -1,4 +1,4 @@
-package p2pfs.filesystem.bridges.dht;
+package p2pfs.filesystem.layers.bridge;
 
 import java.io.IOException;
 import p2pfs.filesystem.types.dto.ExceptionDTO;

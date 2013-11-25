@@ -1,7 +1,7 @@
 package p2pfs.filesystem.types;
 
 /**
- * Class representing a file.
+ * Class representing a file metadata.
  */
 public class File extends Object {
 	
@@ -15,9 +15,9 @@ public class File extends Object {
 	private Directory parent;
 	
 	/**
-	 * Constructor
+	 * Constructor.
 	 * @param hash - hash of the all file.
-	 * @param size
+	 * @param size - sum of the number of bytes for all blocks.
 	 */
 	public File(Directory parent, long hash, int size, String name) {
 		super(hash, size, name);

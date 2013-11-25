@@ -2,7 +2,7 @@ package p2pfs.filesystem.types.dto;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
-import p2pfs.filesystem.PeerThread;
+import p2pfs.filesystem.layers.host.*;
 import net.tomp2p.futures.FutureDHT;
 import net.tomp2p.p2p.Peer;
 import net.tomp2p.peers.Number160;

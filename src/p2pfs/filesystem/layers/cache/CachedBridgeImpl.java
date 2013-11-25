@@ -1,7 +1,4 @@
-/**
- * 
- */
-package p2pfs.filesystem.bridges.fuse;
+package p2pfs.filesystem.layers.cache;
 
 /**
  * CachedBridgeImpl means that the file system API implementation has a caching 
@@ -10,5 +7,6 @@ package p2pfs.filesystem.bridges.fuse;
  * the DHT integration layer.
  */
 public class CachedBridgeImpl extends FileSystemBridge {
+	// TODO: posso guardar um hash (key, object). Assim apenas guardo o objeto mais recente.
 
 }

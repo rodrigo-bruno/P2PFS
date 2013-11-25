@@ -1,4 +1,4 @@
-package p2pfs.filesystem;
+package p2pfs.filesystem.layers.host;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -11,6 +11,8 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.channels.ClosedByInterruptException;
 import java.util.ArrayList;
+
+import p2pfs.filesystem.Main;
 import p2pfs.filesystem.types.dto.ExceptionDTO;
 import p2pfs.filesystem.types.dto.OperationCompleteDTO;
 import p2pfs.filesystem.types.dto.RequestDTO;
