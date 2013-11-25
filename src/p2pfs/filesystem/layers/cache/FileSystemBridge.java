@@ -8,5 +8,7 @@ package p2pfs.filesystem.layers.cache;
  *  - use a cached file system. 
  */
 public abstract class FileSystemBridge {
+	
+	// get(key), put(key,object)
 
 }

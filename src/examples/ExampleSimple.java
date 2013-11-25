@@ -3,7 +3,6 @@ package examples;
 import java.io.IOException;
 import java.net.Inet4Address;
 
-import p2pfs.filesystem.types.User;
 import net.tomp2p.connection.Bindings;
 import net.tomp2p.futures.FutureDHT;
 import net.tomp2p.futures.FutureBootstrap; 
@@ -32,7 +31,8 @@ public class ExampleSimple {
         ExampleSimple dns = new ExampleSimple(Integer.parseInt(args[0]));
         if (args.length == 3) {
             //dns.store(args[1], args[2]);
-        	dns.store2(args[1], new User());
+        	// FIXME: new objects, User no longer exits.
+        	//dns.store2(args[1], new User());
         }
         if (args.length == 2) {
             System.out.println("Name:" + args[1] + " IP:" + dns.get2(args[1]));
@@ -60,7 +60,8 @@ public class ExampleSimple {
     private void store(String name, String ip) throws IOException {
         peer.put(Number160.createHash(name)).setData(new Data(ip)).start().awaitUninterruptibly();
     }
-    private void store2(String username, User user) throws IOException {
-        peer.put(Number160.createHash(username)).setData(new Data(user)).start().awaitUninterruptibly();
-    }
+    // FIXME: User no longer exists
+//    private void store2(String username, User user) throws IOException {
+//        peer.put(Number160.createHash(username)).setData(new Data(user)).start().awaitUninterruptibly();
+//    }
 }
