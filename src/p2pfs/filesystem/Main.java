@@ -6,6 +6,9 @@ import java.util.Random;
 import p2pfs.filesystem.layers.bridge.KademliaBridge;
 import p2pfs.filesystem.layers.bridge.LocalBridgeState;
 import p2pfs.filesystem.layers.bridge.RemoteBridgeState;
+import p2pfs.filesystem.layers.cache.FileSystemBridge;
+import p2pfs.filesystem.layers.cache.SimpleBridgeImpl;
+import p2pfs.filesystem.layers.fuse.Fuse;
 import p2pfs.filesystem.layers.host.PeerThread;
 
 import net.tomp2p.peers.Number160;
@@ -25,6 +28,17 @@ public class Main {
 	 * socket access to the peer thread.
 	 */
 	private static KademliaBridge KADEMLIA_BRIDGE = null;
+	
+	/**
+	 * TODO
+	 */
+	private static FileSystemBridge FS_BRIDGE = null;
+	
+	/**
+	 * TODO
+	 */
+	@SuppressWarnings("unused")
+	private static Fuse FUSE = null;
 	
 	/**
 	 * The user id for the one trying to mount the file system.
@@ -66,10 +80,11 @@ public class Main {
 			System.out.println("Starting Bridge State Thread");
 			
 			Main.KADEMLIA_BRIDGE = new KademliaBridge(new RemoteBridgeState());
-			System.out.println("Init Kademlia Bridge -> Done");			
-			
-			String value = (String) Main.KADEMLIA_BRIDGE.get(Number160.createHash("key"));
-			System.out.println("Retrieving <"+value+"> -> Done");
+			System.out.println("Init Kademlia Bridge -> Done");
+			Main.FS_BRIDGE = new SimpleBridgeImpl(Main.KADEMLIA_BRIDGE);
+			System.out.println("Init FS Bridge -> Done");
+			Main.FUSE = new Fuse(Main.FS_BRIDGE, Main.USERNAME, Main.MOUNTPOINT);
+			System.out.println("Init FUSE -> Done");
 		} 
 		// means that we are only hosting files
 		else if(args.length == 0) {
@@ -96,6 +111,9 @@ public class Main {
 		}
 		// Shutdown mechanism and protection.
 		Runtime.getRuntime().addShutdownHook(Main.getShutdownThread());
+		
+		// TODO: command line to see information?
+		
 		} 
 		catch(IOException e) { throw e; }
 		// some exception might be thrown from the host side (put operation)

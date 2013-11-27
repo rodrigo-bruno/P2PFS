@@ -1,7 +1,6 @@
 package p2pfs.filesystem.layers.cache;
 
 import java.nio.ByteBuffer;
-
 import p2pfs.filesystem.layers.bridge.KademliaBridge;
 import p2pfs.filesystem.types.fs.Directory;
 
@@ -12,33 +11,64 @@ import p2pfs.filesystem.types.fs.Directory;
  */
 public class SimpleBridgeImpl extends FileSystemBridge {
 
-	public SimpleBridgeImpl(KademliaBridge dht) {
-		super(dht);
-		// TODO Auto-generated constructor stub
-	}
+	/**
+	 * Constructor.
+	 * @param dht - see base doc.
+	 */
+	public SimpleBridgeImpl(KademliaBridge dht) { super(dht); }
 
+	/**
+	 * see base doc.
+	 */
 	@Override
 	public Directory getHomeDirectory(String username) {
-		// TODO Auto-generated method stub
-		return null;
+		Directory dir = null;
+		try { 
+			Object o = this.dht.get(this.constructHomeDirectoryID(username));
+			if(o != null) { dir = (Directory) o; }
+		}
+		// This should not happen.
+		catch (Throwable e) { e.printStackTrace(); }
+		return dir;
 	}
 
+	/**
+	 * see base doc.
+	 */
 	@Override
 	public ByteBuffer getFileBlock(String filePath, int blockNumber) {
-		// TODO Auto-generated method stub
-		return null;
+		ByteBuffer bb = null;
+		try { 
+			Object o = this.dht.get(this.constructFileBlock(filePath, blockNumber));
+			if(o != null) { bb = (ByteBuffer) o; }
+		}
+		// This should not happen.
+		catch (Throwable e) { e.printStackTrace(); }
+		return bb;		
 	}
 
+	/**
+	 * see base doc.
+	 */
 	@Override
-	public void putHomeDirectory(String username, Directory directory) {
-		// TODO Auto-generated method stub
-		
+	public boolean putHomeDirectory(String username, Directory directory) {
+		boolean b = false;
+		try { b = this.dht.put(this.constructHomeDirectoryID(username), directory);	}
+		// This should not happen.
+		catch (Throwable e) { e.printStackTrace(); }
+		return b;
 	}
 
+	/**
+	 * see base doc.
+	 */
 	@Override
-	public void putFileBlock(String filePath, int blockNumber, ByteBuffer buffer) {
-		// TODO Auto-generated method stub
-		
+	public boolean putFileBlock(String filePath, int blockNumber, ByteBuffer buffer) {
+		boolean b = false;
+		try { b= this.dht.put(this.constructFileBlock(filePath, blockNumber), buffer); }
+		// This should not happen.
+		catch (Throwable e) { e.printStackTrace(); }
+		return b;
 	}
 
 }

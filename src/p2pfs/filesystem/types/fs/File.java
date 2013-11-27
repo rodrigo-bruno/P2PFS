@@ -11,6 +11,11 @@ import net.fusejna.types.TypeMode.NodeType;
 public class File extends Path {
 
 	/**
+	 * TODO: we need the hashes of the file blocks so that we can see if we need
+	 * to download again a file block or not.
+	 */
+	
+	/**
 	 * Size of the file (in bytes).
 	 */
 	private long size = 0;
@@ -49,7 +54,7 @@ public class File extends Path {
 	 */
 	public int read(final ByteBuffer buffer, final long size, final long offset) {
 		// TODO: implement me.
-		return -1; 
+		return 0; 
 	}
 
 	/**
@@ -69,6 +74,6 @@ public class File extends Path {
 	 */
 	public int write(final ByteBuffer buffer, final long bufSize, final long writeOffset){
 		// TODO: implement me.
-		return -1; 
+		return 0; 
 	}
 }

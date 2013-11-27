@@ -4,6 +4,7 @@ import java.io.IOException;
 import p2pfs.filesystem.types.dto.ExceptionDTO;
 import p2pfs.filesystem.types.dto.FileSystemDTO;
 import p2pfs.filesystem.types.dto.GetDTO;
+import p2pfs.filesystem.types.dto.OperationCompleteDTO;
 import p2pfs.filesystem.types.dto.PutDTO;
 
 import net.tomp2p.peers.Number160;
@@ -34,7 +35,7 @@ public class KademliaBridge {
 	 * This method is synchronized since we might need to change to used socket
 	 * and we don't want to do it in the middle of an operation.
 	 * @param locationKey - the location key.
-	 * @return - the value.
+	 * @return - the value or null if it fails.
 	 * @throws IOException - any problem with the socket connection.
 	 * @throws ClassNotFoundException - problems casting the readObject method.
 	 * @throws Throwable - this throwable may come from the DHT (this exception
@@ -52,6 +53,8 @@ public class KademliaBridge {
 				Throwable t = (Throwable) fsDTO.getObject();
 				throw t;
 			}
+			// test if the operation was successful 
+			if(!((OperationCompleteDTO)fsDTO).getStatus()) { return null; }
 			// return the answered object.
 			return fsDTO.getObject(); }
 	}
@@ -67,7 +70,7 @@ public class KademliaBridge {
 	 * is more general than the other two).
 	 * @return boolean - if the operation was finished successfully or not.
 	 */
-	public void put(Number160 locationKey, Object value) throws Throwable {
+	public boolean put(Number160 locationKey, Object value) throws Throwable {
 		synchronized(this) {
 			// writing request.
 			this.state.getPeerOOS().writeObject(new PutDTO(locationKey, value));
@@ -79,6 +82,7 @@ public class KademliaBridge {
 				Throwable t = (Throwable) fsDTO.getObject();
 				throw t;
 			}
+			return ((OperationCompleteDTO) fsDTO).getStatus();
 		}
 	}
 	

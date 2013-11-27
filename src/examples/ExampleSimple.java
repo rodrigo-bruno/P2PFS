@@ -30,12 +30,12 @@ public class ExampleSimple {
     public static void main(String[] args) throws NumberFormatException, Exception {
         ExampleSimple dns = new ExampleSimple(Integer.parseInt(args[0]));
         if (args.length == 3) {
-            //dns.store(args[1], args[2]);
+            dns.store(args[1], args[2]);
         	// FIXME: new objects, User no longer exits.
         	//dns.store2(args[1], new User());
         }
         if (args.length == 2) {
-            System.out.println("Name:" + args[1] + " IP:" + dns.get2(args[1]));
+            System.out.println("Name:" + args[1] + " IP:" + dns.get(args[1]));
             dns.peer.shutdown();
         }
     }

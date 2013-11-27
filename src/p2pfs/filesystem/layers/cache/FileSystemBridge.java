@@ -2,6 +2,8 @@ package p2pfs.filesystem.layers.cache;
 
 import java.nio.ByteBuffer;
 
+import net.tomp2p.peers.Number160;
+
 import p2pfs.filesystem.layers.bridge.KademliaBridge;
 import p2pfs.filesystem.types.fs.Directory;
 
@@ -30,14 +32,14 @@ public abstract class FileSystemBridge {
 	/**
 	 * Method to retrieve the user's Home Directory.
 	 * @param username - the user name
-	 * @return - the user's home directory.
+	 * @return - the user's home directory or null if it fails.
 	 */
 	public abstract Directory getHomeDirectory(String username);
 	
 	/**
 	 * Method to retrieve a file block.
 	 * @param filePath - the path to the file that contains the block.
-	 * @param blockNumber - the number of the block.
+	 * @param blockNumber - the number of the block or null if it fails.
 	 * @return
 	 */
 	public abstract ByteBuffer getFileBlock(String filePath, int blockNumber);
@@ -46,15 +48,34 @@ public abstract class FileSystemBridge {
 	 * Method to store the user's Home Directory.
 	 * @param username - the user name
 	 * @param directory - the user's home directory.
+	 * @param boolean - if the operation succeed or not.
 	 */
-	public abstract void putHomeDirectory(String username, Directory directory);
+	public abstract boolean putHomeDirectory(String username, Directory directory);
 	
 	/**
 	 * Method to retrieve a file block.
 	 * @param filePath - the path to the file that contains the block.
 	 * @param blockNumber - the number of the block.
 	 * @param buffer - the buffer to store.
+	 * @param boolean - if the operation succeed or not.
 	 */
-	public abstract void putFileBlock(String filePath, int blockNumber, ByteBuffer buffer);
+	public abstract boolean putFileBlock(String filePath, int blockNumber, ByteBuffer buffer);
+	
+	/**
+	 * Method to get the key to be used inside the DHT.
+	 * @param username
+	 * @return
+	 */
+	protected Number160 constructHomeDirectoryID(String username) 
+	{ return Number160.createHash(username); }
+	
+	/**
+	 * Method to get the key to be used inside the DHT.
+	 * @param filePath
+	 * @param blockNumber
+	 * @return
+	 */
+	protected Number160 constructFileBlock(String filePath, int blockNumber) 
+	{ return Number160.createHash(filePath + "%" + blockNumber); }
 
 }
