@@ -7,9 +7,7 @@ import java.io.ObjectOutputStream;
 import java.net.Inet4Address;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
-import java.nio.channels.ClosedByInterruptException;
 import java.util.ArrayList;
 
 import p2pfs.filesystem.Main;

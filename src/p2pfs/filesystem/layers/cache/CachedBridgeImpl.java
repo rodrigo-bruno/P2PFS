@@ -36,13 +36,15 @@ public class CachedBridgeImpl extends FileSystemBridge {
 	}
 
 	@Override
-	public void putHomeDirectory(String username, Directory directory) {
+	public boolean putHomeDirectory(String username, Directory directory) {
+		return false;
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void putFileBlock(String filePath, int blockNumber, ByteBuffer buffer) {
+	public boolean putFileBlock(String filePath, int blockNumber, ByteBuffer buffer) {
+		return false;
 		// TODO Auto-generated method stub
 		
 	}

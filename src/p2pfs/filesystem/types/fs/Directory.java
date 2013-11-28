@@ -1,5 +1,6 @@
 package p2pfs.filesystem.types.fs;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,7 +11,12 @@ import net.fusejna.types.TypeMode.NodeType;
 /**
  * Class representing a directory object.
  */
-public class Directory extends Path {
+public class Directory extends Path implements Serializable {
+	
+	/**
+	 * Serialization id. 
+	 */
+	private static final long serialVersionUID = 1L;
 	
 	/**
 	 * List of containing file system objects.

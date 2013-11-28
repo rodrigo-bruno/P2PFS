@@ -1,11 +1,18 @@
 package p2pfs.filesystem.types.fs;
 
+import java.io.Serializable;
+
 import net.fusejna.StructStat.StatWrapper;
 
 /**
  * Class representing a file system object.
  */
-public abstract class Path {
+public abstract class Path implements Serializable {
+	
+	/**
+	 * Serialization id. 
+	 */
+	private static final long serialVersionUID = 1L;
 	
 	/**
 	 * Name of the object.

@@ -61,7 +61,7 @@ public class Main {
 	 * a local one.
 	 * FIXME: this should be loaded from a config file.
 	 */
-	final private static int remoteStateTime = 1*60*1000; 
+	final private static int remoteStateTime = 20*60*1000; 
 
 	/**
 	 * Main method.
@@ -85,6 +85,8 @@ public class Main {
 			System.out.println("Init FS Bridge -> Done");
 			Main.FUSE = new Fuse(Main.FS_BRIDGE, Main.USERNAME, Main.MOUNTPOINT);
 			System.out.println("Init FUSE -> Done");
+			
+			Thread.sleep(5*60*1000);
 		} 
 		// means that we are only hosting files
 		else if(args.length == 0) {
@@ -101,7 +103,7 @@ public class Main {
 			String value = (String) Main.KADEMLIA_BRIDGE.get(Number160.createHash("key"));
 			System.out.println("Retrieving <"+value+"> -> Done");
 			
-			Thread.sleep(2*60*1000);
+			Thread.sleep(10*60*1000);
 			
 		} 
 		// error case

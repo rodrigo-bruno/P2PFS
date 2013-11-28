@@ -1,5 +1,6 @@
 package p2pfs.filesystem.types.fs;
 
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 
 import net.fusejna.StructStat.StatWrapper;
@@ -8,8 +9,13 @@ import net.fusejna.types.TypeMode.NodeType;
 /**
  * Class representing a file object.
  */
-public class File extends Path {
+public class File extends Path implements Serializable {
 
+	/**
+	 * Serialization id. 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	/**
 	 * TODO: we need the hashes of the file blocks so that we can see if we need
 	 * to download again a file block or not.
