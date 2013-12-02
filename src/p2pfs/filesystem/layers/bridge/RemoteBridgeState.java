@@ -3,6 +3,7 @@ package p2pfs.filesystem.layers.bridge;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.ConnectException;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
@@ -27,7 +28,15 @@ public class RemoteBridgeState extends BridgeState {
 			throws UnknownHostException, IOException {
 		// TODO: get a random bootstrapNode and try others if the first one fails.
 		// TODO: try to connect to the node with the user name.
-		this.socket = new Socket(Main.BOOTSTRAP_NODES[0], PeerThread.FILESYSTEM_PORT); 
+		for (String address : Main.BOOTSTRAP_NODES) {
+			try { 
+				this.socket = new Socket(address, PeerThread.FILESYSTEM_PORT);
+				break;
+			}
+			// this happens if the bootstrap node is down.
+			catch (ConnectException e ) {}
+		}
+		 
 	}
 
 	/**

@@ -9,6 +9,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
+import java.util.List;
 
 import p2pfs.filesystem.Main;
 import p2pfs.filesystem.types.dto.ExceptionDTO;
@@ -21,6 +22,7 @@ import net.tomp2p.futures.FutureDHT;
 import net.tomp2p.p2p.Peer;
 import net.tomp2p.p2p.PeerMaker;
 import net.tomp2p.peers.Number160;
+import net.tomp2p.peers.PeerAddress;
 
 /**
  * Class that will hold the server side functionality.
@@ -186,14 +188,23 @@ public class PeerThread extends Thread {
             		setInetAddress(Inet4Address.getByName(addr)).
             		setPorts(this.dhtPort).
             		start();
+            fb.awaitUninterruptibly();
             if (fb.getBootstrapTo() != null) {
                 peer.
                 discover().
                 setPeerAddress(fb.getBootstrapTo().iterator().next()).
                 start().
                 awaitUninterruptibly();
+                
+                // Print known DHT nodes.
+                List<PeerAddress> list = peer.getPeerBean().getPeerMap().getAll();
+                System.out.println("Successful bootstrap");
+                for(PeerAddress adr : list ) {
+                	System.out.println("Peer node in bean: " + adr.getInetAddress().getHostAddress());
+                }
+                
                 break;
-            }	
+            }            
         }
 		// setup the FS socket
 		this.fsSocket = new ServerSocket(FILESYSTEM_PORT, backlog);
