@@ -189,6 +189,8 @@ public class PeerThread extends Thread {
             		setPorts(this.dhtPort).
             		start();
             fb.awaitUninterruptibly();
+            /* COMENTA ESTA LINHA DE BAIXO SE TIVERES PROBLEMAS NO GOSSIP */
+            new Gossip(this);
             if (fb.getBootstrapTo() != null) {
                 peer.
                 discover().
@@ -210,6 +212,17 @@ public class PeerThread extends Thread {
 		this.fsSocket = new ServerSocket(FILESYSTEM_PORT, backlog);
 		// initialize the client threads list
 		this.clientThreads = new ArrayList<Thread>();
+	}
+	
+	//ADDED
+	public Number160 getPeerID(){
+		return this.peer.getPeerID();
+	}
+	public List<PeerAddress> getPeerList(){
+		return this.peer.getPeerBean().getPeerMap().getAll();
+	}
+	public int getPeerSize(){
+		return getPeerList().size();
 	}
 	
 	/**

@@ -1,5 +1,6 @@
 package p2pfs.filesystem.types.dto;
 import java.io.Serializable;
+import net.tomp2p.peers.Number160;
 
 public class GossipDTO implements Serializable {
 
@@ -9,7 +10,7 @@ public class GossipDTO implements Serializable {
 	private static final long serialVersionUID = 1L;
 
 	private int gossipId;
-	private int source;
+	private Number160 source;
 	private double W1;
 	private float Su;
 	private float Sn;
@@ -20,7 +21,7 @@ public class GossipDTO implements Serializable {
 
 	public GossipDTO(
 			int gossipId, 
-			int source, 
+			Number160 source, 
 			double W1, 
 			float Su, 
 			float Sn, 
@@ -40,7 +41,7 @@ public class GossipDTO implements Serializable {
 	}
 	
 	public int getGossipId() { return this.gossipId; }
-	public int getSource() { return this.source; }
+	public Number160 getSource() { return this.source; }
 	public double getW1() { return this.W1; }
 	public float getSu() { return this.Su; }
 	public float getSn() { return this.Sn; }
