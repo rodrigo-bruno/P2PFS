@@ -2,6 +2,7 @@ package p2pfs.filesystem;
 
 import java.io.IOException;
 import java.util.Random;
+import java.util.Scanner;
 
 import p2pfs.filesystem.layers.bridge.KademliaBridge;
 import p2pfs.filesystem.layers.bridge.LocalBridgeState;
@@ -55,13 +56,14 @@ public class Main {
 	 * FIXME: this should be loaded from a config file.
 	 */
 	final public static String[] BOOTSTRAP_NODES = {"planetlab-1.tagus.ist.utl.pt", "planetlab-2.tagus.ist.utl.pt"};
+	//final public static String[] BOOTSTRAP_NODES = {"127.0.0.1"};
 	
 	/**
 	 * Time in milliseconds until a node using a remote bridge state changes to 
 	 * a local one.
 	 * FIXME: this should be loaded from a config file.
 	 */
-	final private static int remoteStateTime = 60*1000; 
+	final private static int remoteStateTime = 5*1000; 
 
 	/**
 	 * Main method.
@@ -70,53 +72,52 @@ public class Main {
 	 */
 	public static void main(String[] args) throws IOException {
 		try{
-		// means that we need to mount the FS
-		if(args.length == 2) {
-			Main.USERNAME = args[0];
-			Main.MOUNTPOINT = args[1];
-			Thread t = Main.getBridgeStateThread();
-			t.setDaemon(true);
-			t.start();
-			System.out.println("Starting Bridge State Thread");
-			
-			Main.KADEMLIA_BRIDGE = new KademliaBridge(new RemoteBridgeState());
-			System.out.println("Init Kademlia Bridge -> Done");
-			Main.FS_BRIDGE = new SimpleBridgeImpl(Main.KADEMLIA_BRIDGE);
-			System.out.println("Init FS Bridge -> Done");
-			Main.FUSE = new Fuse(Main.FS_BRIDGE, Main.USERNAME, Main.MOUNTPOINT);
-			System.out.println("Init FUSE -> Done");
-			
-			Thread.sleep(5*60*1000);
-		} 
-		// means that we are only hosting files
-		else if(args.length == 0) {
-			System.out.println("Starting Initialization Process");
-			Main.initPeerThread();
-			System.out.println("Init Peer Thread -> Done");
+			// means that we need to mount the FS
+			if(args.length == 2) {
+				Main.USERNAME = args[0];
+				Main.MOUNTPOINT = args[1];
+				Thread t = Main.getBridgeStateThread();
+				t.setDaemon(true);
+				t.start();
+				System.out.println("Starting Bridge State Thread");
 
-			Main.KADEMLIA_BRIDGE = new KademliaBridge(new LocalBridgeState());
-			System.out.println("Init Kademlia Bridge -> Done");
+				Main.KADEMLIA_BRIDGE = new KademliaBridge(new RemoteBridgeState());
+				System.out.println("Init Kademlia Bridge -> Done");
+				Main.FS_BRIDGE = new SimpleBridgeImpl(Main.KADEMLIA_BRIDGE);
+				System.out.println("Init FS Bridge -> Done");
+				Main.FUSE = new Fuse(Main.FS_BRIDGE, Main.USERNAME, Main.MOUNTPOINT);
+				System.out.println("Init FUSE -> Done");
+			} 
+			// means that we are only hosting files
+			else if(args.length == 0) {
+				System.out.println("Starting Initialization Process");
+				Main.initPeerThread();
+				System.out.println("Init Peer Thread -> Done");
 
-			Main.KADEMLIA_BRIDGE.put(Number160.createHash("key"), "value");
-			System.out.println("Inserting <key,value> -> Done");
-			
-			String value = (String) Main.KADEMLIA_BRIDGE.get(Number160.createHash("key"));
-			System.out.println("Retrieving <"+value+"> -> Done");
-			
-			Thread.sleep(10*60*1000);
-			
-		} 
-		// error case
-		else {
-			System.out.println("Wrong arguments!");
-			System.out.println("java -jar p2pfs.jar [username mountpoint]+");
+				Main.KADEMLIA_BRIDGE = new KademliaBridge(new LocalBridgeState());
+				System.out.println("Init Kademlia Bridge -> Done");
+
+				Main.KADEMLIA_BRIDGE.put(Number160.createHash("key"), "value");
+				System.out.println("Inserting <key,value> -> Done");
+
+				String value = (String) Main.KADEMLIA_BRIDGE.get(Number160.createHash("key"));
+				System.out.println("Retrieving <"+value+"> -> Done");			
+			} 
+			// error case
+			else {
+				System.out.println("Wrong arguments!");
+				System.out.println("java -jar p2pfs.jar [username mountpoint]+");
+			}
+
+			// Shutdown mechanism and protection.
+			Runtime.getRuntime().addShutdownHook(Main.getShutdownThread());
+
+			// TODO: command line to see information?
+			Scanner input = new Scanner(System.in);
+			while (input.hasNextLine()) { }
+
 		}
-		// Shutdown mechanism and protection.
-		Runtime.getRuntime().addShutdownHook(Main.getShutdownThread());
-		
-		// TODO: command line to see information?
-		
-		} 
+
 		catch(IOException e) { throw e; }
 		// some exception might be thrown from the host side (put operation)
 		catch (Throwable e) { e.printStackTrace(); }
