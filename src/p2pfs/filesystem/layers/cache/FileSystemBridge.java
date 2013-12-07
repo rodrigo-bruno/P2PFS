@@ -77,5 +77,33 @@ public abstract class FileSystemBridge {
 	 */
 	protected Number160 constructFileBlock(String filePath, int blockNumber) 
 	{ return Number160.createHash(filePath + "%" + blockNumber); }
+	
+	/**
+	 * Helper method to serialize a ByteBuffer.
+	 * @param bb - the ByteBuffer to serialize.
+	 * @return - the serializable object.
+	 */
+	protected Object getSerializableByteBuffer(ByteBuffer bb) {
+		// Step 1: extract byte array from ByteBuffer
+		bb.position(0); // Rewind
+		byte[] bytes = new byte[bb.remaining()];	
+		bb.get(bytes);
+		bb.position(0); // Rewind
+		return bytes;
+	}
+	
+	/**
+	 * Helper method to deserialize a ByteBuffer.
+	 * @param o - the object to be deserialize.
+	 * @return - the deserializable ByteBuffer.
+	 */
+	protected ByteBuffer getSerializedByteBuffer(Object o) {
+		ByteBuffer bb = null;
+		byte[] bytes = (byte[])o;
+		bb = ByteBuffer.allocate(bytes.length);
+		bb.put(bytes);
+		bb.position(0);
+		return bb;
+	}
 
 }

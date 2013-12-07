@@ -22,7 +22,7 @@ public abstract class Path implements Serializable {
 	/**
 	 * Object's parent.
 	 */
-	protected Directory parent;
+	protected Directory parent;	
 
 	/**
 	 * Constructor.

@@ -34,16 +34,18 @@ public class SimpleBridgeImpl extends FileSystemBridge {
 
 	/**
 	 * see base doc.
+	 * TODO: do proper comments.
 	 */
 	@Override
 	public ByteBuffer getFileBlock(String filePath, int blockNumber) {
 		ByteBuffer bb = null;
+		Object o = null;
 		try { 
-			Object o = this.dht.get(this.constructFileBlock(filePath, blockNumber));
-			if(o != null) { bb = (ByteBuffer) o; }
-		}
+			o = this.dht.get(this.constructFileBlock(filePath, blockNumber));
+			if(o != null) {	bb = this.getSerializedByteBuffer(o); }
+		}		
 		// This should not happen.
-		catch (Throwable e) { e.printStackTrace(); }
+		catch (Throwable e) { e.printStackTrace(); }	
 		return bb;		
 	}
 
@@ -61,14 +63,20 @@ public class SimpleBridgeImpl extends FileSystemBridge {
 
 	/**
 	 * see base doc.
+	 * TODO: do proper comments
 	 */
 	@Override
-	public boolean putFileBlock(String filePath, int blockNumber, ByteBuffer buffer) {
+	public boolean putFileBlock(String filePath, int blockNumber, ByteBuffer bb) {
+		Object o = null;
 		boolean b = false;
-		try { b= this.dht.put(this.constructFileBlock(filePath, blockNumber), buffer); }
+		// create an object containing the array of bytes.
+		try {
+			o = this.getSerializableByteBuffer(bb);
+			if (o != null) 
+			{ b = this.dht.put(this.constructFileBlock(filePath, blockNumber), o); }
+		} 
 		// This should not happen.
 		catch (Throwable e) { e.printStackTrace(); }
 		return b;
 	}
-
 }

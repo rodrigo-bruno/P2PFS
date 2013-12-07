@@ -144,7 +144,7 @@ public class Fuse extends FuseFilesystemAdapterAssumeImplemented {
 		final Path p = this.getHomeDirectory().find(path);
 		if (p == null) { return -ErrorCodes.ENOENT(); }
 		if (!(p instanceof File)) { return -ErrorCodes.EISDIR(); }
-		return ((File) p).read(buffer, size, offset);
+		return ((File) p).read(buffer, size, offset, this.fsb);
 	}
 	
 	@Override
@@ -188,7 +188,7 @@ public class Fuse extends FuseFilesystemAdapterAssumeImplemented {
 		final Path p = home.find(path);
 		if (p == null) { return -ErrorCodes.ENOENT(); }
 		if (!(p instanceof File)) { return -ErrorCodes.EISDIR(); }
-		((File) p).truncate(offset);
+		((File) p).truncate(offset, this.fsb);
 		this.storeHomeDirectory(home);
 		return 0;
 	}
@@ -214,7 +214,7 @@ public class Fuse extends FuseFilesystemAdapterAssumeImplemented {
 		final Path p = home.find(path);
 		if (p == null) { return -ErrorCodes.ENOENT(); }
 		if (!(p instanceof File)) { return -ErrorCodes.EISDIR(); }
-		int ret = ((File) p).write(buf, bufSize, writeOffset);
+		int ret = ((File) p).write(buf, bufSize, writeOffset, this.fsb);
 		this.storeHomeDirectory(home);
 		return ret;
 	}

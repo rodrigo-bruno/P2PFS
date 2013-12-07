@@ -55,15 +55,15 @@ public class Main {
 	 * Arrays of addresses for the bootstraping nodes.
 	 * FIXME: this should be loaded from a config file.
 	 */
-	final public static String[] BOOTSTRAP_NODES = {"planetlab-1.tagus.ist.utl.pt", "planetlab-2.tagus.ist.utl.pt"};
-	//final public static String[] BOOTSTRAP_NODES = {"127.0.0.1"};
+	//final public static String[] BOOTSTRAP_NODES = {"planetlab-1.tagus.ist.utl.pt", "planetlab-2.tagus.ist.utl.pt"};
+	final public static String[] BOOTSTRAP_NODES = {"127.0.0.1"};
 	
 	/**
 	 * Time in milliseconds until a node using a remote bridge state changes to 
 	 * a local one.
 	 * FIXME: this should be loaded from a config file.
 	 */
-	final private static int remoteStateTime = 5*1000; 
+	final private static int remoteStateTime = 10*60*1000; 
 
 	/**
 	 * Main method.
