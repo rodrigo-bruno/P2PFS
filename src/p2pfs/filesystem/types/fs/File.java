@@ -20,13 +20,28 @@ public class File extends Path implements Serializable {
 	
 	/**
 	 * TODO: we need the hashes of the file blocks so that we can see if we need
-	 * to download again a file block or not.
+	 * to download again a file block or not. -> feito na camada acima?
+	 * 
+	 * usar metodo aux: 
+	 * ByteBuffer getMergedBlock(final long size, final long offset)
+	 * boolean putMergedBlock(ByteBuffer bb, int offset)
+	 * 
+	 * read:
+	 * ver o offset para ver o bloco inicial.
+	 * ver size: pode ser preciso usar mais mais blocos
+	 * start_block = offset%block_size 
+	 * 
 	 */
 	
 	/**
 	 * Size of the file (in bytes).
 	 */
 	private long size = 0;
+	
+	/**
+	 * Max size for each block.
+	 */
+	private long blockSize = 1024;
 	
 	/**
 	 * Constructor.
@@ -47,8 +62,7 @@ public class File extends Path implements Serializable {
 	 * see base doc.
 	 */
 	@Override
-	public void getattr(final StatWrapper stat)
-	{
+	public void getattr(final StatWrapper stat) {
 		stat.setMode(NodeType.FILE);
 		stat.size(this.size);
 	}
@@ -77,16 +91,17 @@ public class File extends Path implements Serializable {
 	 * @param size - the final file size.
 	 */
 	public void truncate(final long size, FileSystemBridge fsb){
-//		ByteBuffer bb = fsb.getFileBlock(this.name, 0);
-//		if (bb != null && size < bb.capacity()) {
-//			// Need to create a new, smaller buffer
-//			final ByteBuffer newContents = ByteBuffer.allocate((int) size);
-//			final byte[] bytesRead = new byte[(int) size];
-//			bb.get(bytesRead);
-//			newContents.put(bytesRead);
-//			bb = newContents;
-//			fsb.putFileBlock(this.name, 0, bb);
-//		}
+		ByteBuffer bb = fsb.getFileBlock(this.name, 0);
+		if (bb != null && size < bb.capacity()) {
+			// Need to create a new, smaller buffer
+			final ByteBuffer newContents = ByteBuffer.allocate((int) size);
+			final byte[] bytesRead = new byte[(int) size];
+			bb.get(bytesRead);
+			newContents.put(bytesRead);
+			bb = newContents;
+			this.size = bb.capacity(); // Fix file size.
+			fsb.putFileBlock(this.name, 0, bb);
+		}
 	}
 
 	/**
@@ -112,8 +127,49 @@ public class File extends Path implements Serializable {
 		bb.position((int) writeOffset);
 		bb.put(bytesToWrite);
 		bb.position(0); // Rewind
-		this.size = bb.capacity(); // FIXME: right? It seems to be!
+		this.size = bb.capacity(); // Fix file size.
 		fsb.putFileBlock(this.name, 0, bb);
 		return (int) bufSize;
 	}
+	
+	/**
+	 * Auxiliary method to obtain multiple file blocks and merge them into a 
+	 * single byte buffer.
+	 * The size and offset are used to determine which file blocks will be used.
+	 * These file blocks are retrieved and merged.
+	 * Further operations should use offset %= this.blockSize. 
+	 * @param size
+	 * @param offset
+	 * @param fsb
+	 * @return
+	 */
+	ByteBuffer getSplittedBlock(final long size, final long offset, FileSystemBridge fsb) {
+		// calculate the first and last needed blocks.
+		int startBlock = (int) (offset / this.blockSize);
+		int endBlock = (int) ((offset + size) / this.blockSize);
+		// retrieve all the needed file parts
+		ByteBuffer[] bbarray = new ByteBuffer[endBlock-startBlock + 1];
+		for(int index = 0 ; index < bbarray.length; index++) 
+		{ bbarray[index] = fsb.getFileBlock(this.name, index + startBlock);	}
+		// create the array that will contain all the file parts
+		int capacity = (int) (this.blockSize*(bbarray.length - 1) + bbarray[bbarray.length - 1].capacity());
+		ByteBuffer bb = ByteBuffer.allocate(capacity);
+		for(int index = 0; index < bbarray.length; index++) 
+		{ bb.put(bbarray[index].array()); }
+		bb.rewind();
+		return bb;
+	}
+	
+	/**
+	 * TODO!
+	 * @param bb
+	 * @param size
+	 * @param offset
+	 * @param fsb
+	 * @return
+	 */
+	boolean putSplittedBlock(ByteBuffer bb, final long size, final long offset, FileSystemBridge fsb) {
+		return false;
+	}
+	
 }

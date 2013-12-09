@@ -7,6 +7,7 @@ import java.util.Scanner;
 import p2pfs.filesystem.layers.bridge.KademliaBridge;
 import p2pfs.filesystem.layers.bridge.LocalBridgeState;
 import p2pfs.filesystem.layers.bridge.RemoteBridgeState;
+import p2pfs.filesystem.layers.cache.CachedBridgeImpl;
 import p2pfs.filesystem.layers.cache.FileSystemBridge;
 import p2pfs.filesystem.layers.cache.SimpleBridgeImpl;
 import p2pfs.filesystem.layers.fuse.Fuse;
@@ -83,7 +84,8 @@ public class Main {
 
 				Main.KADEMLIA_BRIDGE = new KademliaBridge(new RemoteBridgeState());
 				System.out.println("Init Kademlia Bridge -> Done");
-				Main.FS_BRIDGE = new SimpleBridgeImpl(Main.KADEMLIA_BRIDGE);
+				//Main.FS_BRIDGE = new SimpleBridgeImpl(Main.KADEMLIA_BRIDGE);
+				Main.FS_BRIDGE = new CachedBridgeImpl(Main.KADEMLIA_BRIDGE);
 				System.out.println("Init FS Bridge -> Done");
 				Main.FUSE = new Fuse(Main.FS_BRIDGE, Main.USERNAME, Main.MOUNTPOINT);
 				System.out.println("Init FUSE -> Done");
@@ -150,7 +152,7 @@ public class Main {
 	public static Thread getShutdownThread() {
 		return new Thread() {
 			/**
-			 * The method responsible for cleaning all threads.
+			 * The method responsible for cleaning all threads and mounts.
 			 */
 			@Override
 			public void run() { 
@@ -165,7 +167,7 @@ public class Main {
 				// exception while performing the join).
 				catch (InterruptedException e) { e.printStackTrace(); }
 				// if any problem happens during the Kademlia Bridge socket closing.
-				catch (IOException e) {	e.printStackTrace(); }
+				catch (IOException e) {	e.printStackTrace(); } 
 			}
 		};
 	}

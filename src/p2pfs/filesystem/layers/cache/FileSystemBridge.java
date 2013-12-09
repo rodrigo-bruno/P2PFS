@@ -34,15 +34,31 @@ public abstract class FileSystemBridge {
 	 * @param username - the user name
 	 * @return - the user's home directory or null if it fails.
 	 */
-	public abstract Directory getHomeDirectory(String username);
+	public Directory getHomeDirectory(String username)
+	{ return this.getHomeDirectory(this.constructHomeDirectoryID(username)); }
+	
+	/**
+	 * Method to retrieve the user's Home Directory.
+	 * @param key - the DHT key.
+	 * @return - the user's home directory or null if it fails.
+	 */
+	public abstract Directory getHomeDirectory(Number160 key);
 	
 	/**
 	 * Method to retrieve a file block.
 	 * @param filePath - the path to the file that contains the block.
-	 * @param blockNumber - the number of the block or null if it fails.
-	 * @return
+	 * @param blockNumber - the number of the block.
+	 * @return - a byte buffer or null if it fails
 	 */
-	public abstract ByteBuffer getFileBlock(String filePath, int blockNumber);
+	public ByteBuffer getFileBlock(String filePath, int blockNumber) 
+	{ return this.getFileBlock(this.constructFileBlock(filePath, blockNumber)); }
+	
+	/**
+	 * Method to retrieve a file block.
+	 * @param key - the DHT key.
+	 * @return - a byte buffer or null if it fails
+	 */
+	public abstract ByteBuffer getFileBlock(Number160 key);
 	
 	/**
 	 * Method to store the user's Home Directory.
@@ -50,7 +66,16 @@ public abstract class FileSystemBridge {
 	 * @param directory - the user's home directory.
 	 * @param boolean - if the operation succeed or not.
 	 */
-	public abstract boolean putHomeDirectory(String username, Directory directory);
+	public boolean putHomeDirectory(String username, Directory directory) 
+	{ return this.putHomeDirectory(this.constructHomeDirectoryID(username), directory); }
+
+	/**
+	 * Method to store the user's Home Directory.
+	 * @param key - the DHT key.
+	 * @param directory - the user's home directory.
+	 * @param boolean - if the operation succeed or not.
+	 */
+	public abstract boolean putHomeDirectory(Number160 key, Directory directory);
 	
 	/**
 	 * Method to retrieve a file block.
@@ -59,7 +84,16 @@ public abstract class FileSystemBridge {
 	 * @param buffer - the buffer to store.
 	 * @param boolean - if the operation succeed or not.
 	 */
-	public abstract boolean putFileBlock(String filePath, int blockNumber, ByteBuffer buffer);
+	public boolean putFileBlock(String filePath, int blockNumber, ByteBuffer buffer) 
+	{ return this.putFileBlock(this.constructFileBlock(filePath, blockNumber), buffer); }
+
+	/**
+	 * Method to retrieve a file block.
+	 * @param key - the DHT key.
+	 * @param buffer - the buffer to store.
+	 * @param boolean - if the operation succeed or not.
+	 */
+	public abstract boolean putFileBlock(Number160 key, ByteBuffer buffer);
 	
 	/**
 	 * Method to get the key to be used inside the DHT.
@@ -78,32 +112,5 @@ public abstract class FileSystemBridge {
 	protected Number160 constructFileBlock(String filePath, int blockNumber) 
 	{ return Number160.createHash(filePath + "%" + blockNumber); }
 	
-	/**
-	 * Helper method to serialize a ByteBuffer.
-	 * @param bb - the ByteBuffer to serialize.
-	 * @return - the serializable object.
-	 */
-	protected Object getSerializableByteBuffer(ByteBuffer bb) {
-		// Step 1: extract byte array from ByteBuffer
-		bb.position(0); // Rewind
-		byte[] bytes = new byte[bb.remaining()];	
-		bb.get(bytes);
-		bb.position(0); // Rewind
-		return bytes;
-	}
-	
-	/**
-	 * Helper method to deserialize a ByteBuffer.
-	 * @param o - the object to be deserialize.
-	 * @return - the deserializable ByteBuffer.
-	 */
-	protected ByteBuffer getSerializedByteBuffer(Object o) {
-		ByteBuffer bb = null;
-		byte[] bytes = (byte[])o;
-		bb = ByteBuffer.allocate(bytes.length);
-		bb.put(bytes);
-		bb.position(0);
-		return bb;
-	}
 
 }

@@ -42,9 +42,9 @@ public abstract class Path implements Serializable {
 
 	/**
 	 * Method to delete the object.
+	 * TODO: this only deletes metadata! Need to remove the contents!
 	 */
-	public void delete()
-	{
+	public void delete() {
 		if (parent != null) {
 			parent.contents.remove(this);
 			parent = null;

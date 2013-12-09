@@ -1,6 +1,8 @@
 package p2pfs.filesystem.layers.cache;
 
 import java.nio.ByteBuffer;
+
+import net.tomp2p.peers.Number160;
 import p2pfs.filesystem.layers.bridge.KademliaBridge;
 import p2pfs.filesystem.types.fs.Directory;
 
@@ -21,10 +23,10 @@ public class SimpleBridgeImpl extends FileSystemBridge {
 	 * see base doc.
 	 */
 	@Override
-	public Directory getHomeDirectory(String username) {
+	public Directory getHomeDirectory(Number160 key) {
 		Directory dir = null;
 		try { 
-			Object o = this.dht.get(this.constructHomeDirectoryID(username));
+			Object o = this.dht.get(key);
 			if(o != null) { dir = (Directory) o; }
 		}
 		// This should not happen.
@@ -34,16 +36,12 @@ public class SimpleBridgeImpl extends FileSystemBridge {
 
 	/**
 	 * see base doc.
-	 * TODO: do proper comments.
 	 */
 	@Override
-	public ByteBuffer getFileBlock(String filePath, int blockNumber) {
+	public ByteBuffer getFileBlock(Number160 key) {
 		ByteBuffer bb = null;
-		Object o = null;
-		try { 
-			o = this.dht.get(this.constructFileBlock(filePath, blockNumber));
-			if(o != null) {	bb = this.getSerializedByteBuffer(o); }
-		}		
+		try 
+		{ bb = ByteBuffer.wrap((byte[])this.dht.get(key)); }		
 		// This should not happen.
 		catch (Throwable e) { e.printStackTrace(); }	
 		return bb;		
@@ -53,9 +51,9 @@ public class SimpleBridgeImpl extends FileSystemBridge {
 	 * see base doc.
 	 */
 	@Override
-	public boolean putHomeDirectory(String username, Directory directory) {
+	public boolean putHomeDirectory(Number160 key, Directory directory) {
 		boolean b = false;
-		try { b = this.dht.put(this.constructHomeDirectoryID(username), directory);	}
+		try { b = this.dht.put(key, directory);	}
 		// This should not happen.
 		catch (Throwable e) { e.printStackTrace(); }
 		return b;
@@ -63,18 +61,12 @@ public class SimpleBridgeImpl extends FileSystemBridge {
 
 	/**
 	 * see base doc.
-	 * TODO: do proper comments
 	 */
 	@Override
-	public boolean putFileBlock(String filePath, int blockNumber, ByteBuffer bb) {
-		Object o = null;
+	public boolean putFileBlock(Number160 key, ByteBuffer bb) {
 		boolean b = false;
-		// create an object containing the array of bytes.
-		try {
-			o = this.getSerializableByteBuffer(bb);
-			if (o != null) 
-			{ b = this.dht.put(this.constructFileBlock(filePath, blockNumber), o); }
-		} 
+		try 
+		{ b = this.dht.put(key, bb.array()); } 
 		// This should not happen.
 		catch (Throwable e) { e.printStackTrace(); }
 		return b;

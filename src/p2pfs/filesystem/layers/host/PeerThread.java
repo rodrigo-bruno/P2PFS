@@ -190,7 +190,7 @@ public class PeerThread extends Thread {
             		start();
             fb.awaitUninterruptibly();
             /* COMENTA ESTA LINHA DE BAIXO SE TIVERES PROBLEMAS NO GOSSIP */
-            new Gossip(this);
+            //new Gossip(this);
             if (fb.getBootstrapTo() != null) {
                 peer.
                 discover().
