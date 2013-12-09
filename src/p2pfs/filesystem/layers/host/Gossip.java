@@ -54,7 +54,7 @@ public class Gossip {
 	public static final int RESET = 30000;
 	public static final int START_CHECK = 100; //freq at which node zero checks if it has peers to start gossip
 	public static final int SEND = 2000;
-	public static final int LISTENING_PORT = 4004;
+	public static final int LISTENING_PORT = 40004;
 	
 	private ServerSocket serverSocket;
 	
@@ -79,7 +79,6 @@ public class Gossip {
 		Gossip.id = peerThread.getPeerID();
 		try {
 			serverSocket = new ServerSocket(LISTENING_PORT); //use the same port for gossip listening on all nodes ServerSocket(LISTENING_PORT);
-			serverSocket.bind(null);
 			System.out.println("Listening on port " + serverSocket.getLocalPort());
 
 			initThreads();
