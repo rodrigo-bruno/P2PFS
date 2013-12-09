@@ -39,9 +39,9 @@ public class File extends Path implements Serializable {
 	private long size = 0;
 	
 	/**
-	 * Max size for each block.
+	 * Max size for each block (in bytes) = 128Kb.
 	 */
-	private long blockSize = 1024;
+	private long blockSize = 128*1024;
 	
 	/**
 	 * Constructor.
@@ -117,8 +117,11 @@ public class File extends Path implements Serializable {
 		// if the buffer doesn't exist.
 		if(bb == null) { bb = ByteBuffer.allocate(0); }
 		if (maxWriteIndex > bb.capacity()) {
+			// check how many blocks do we need more
+			int newCapacity = (int) (maxWriteIndex/this.blockSize);
+			newCapacity = maxWriteIndex % this.blockSize == 0 ? newCapacity : newCapacity + 1;
 			// Need to create a new, larger buffer
-			final ByteBuffer newContents = ByteBuffer.allocate(maxWriteIndex);
+			final ByteBuffer newContents = ByteBuffer.allocate((int) (newCapacity*this.blockSize)); // TODO: debug
 			newContents.put(bb);
 			bb = newContents;
 		}
