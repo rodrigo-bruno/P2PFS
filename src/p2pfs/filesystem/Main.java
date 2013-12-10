@@ -9,8 +9,8 @@ import p2pfs.filesystem.layers.bridge.LocalBridgeState;
 import p2pfs.filesystem.layers.bridge.RemoteBridgeState;
 import p2pfs.filesystem.layers.cache.CachedBridgeImpl;
 import p2pfs.filesystem.layers.cache.FileSystemBridge;
-import p2pfs.filesystem.layers.cache.SimpleBridgeImpl;
 import p2pfs.filesystem.layers.fuse.Fuse;
+import p2pfs.filesystem.layers.host.Gossip;
 import p2pfs.filesystem.layers.host.PeerThread;
 
 import net.tomp2p.peers.Number160;
@@ -24,6 +24,9 @@ public class Main {
 	 * The thread playing the host side. Check it's documentation for more info.
 	 */
 	private static PeerThread PEER_THREAD = null;
+	
+	/** Reference to the gossip object */
+	private static Gossip GOSSIP = null;
 	
 	/**
 	 * Kademlia Bridge implementation. This object will be used to abstract the
