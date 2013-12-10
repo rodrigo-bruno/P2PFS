@@ -42,7 +42,7 @@ public abstract class FileSystemBridge {
 	 * @param key - the DHT key.
 	 * @return - the user's home directory or null if it fails.
 	 */
-	public abstract Directory getHomeDirectory(Number160 key);
+	protected abstract Directory getHomeDirectory(Number160 key);
 	
 	/**
 	 * Method to retrieve a file block.
@@ -58,7 +58,7 @@ public abstract class FileSystemBridge {
 	 * @param key - the DHT key.
 	 * @return - a byte buffer or null if it fails
 	 */
-	public abstract ByteBuffer getFileBlock(Number160 key);
+	protected abstract ByteBuffer getFileBlock(Number160 key);
 	
 	/**
 	 * Method to store the user's Home Directory.
@@ -75,7 +75,7 @@ public abstract class FileSystemBridge {
 	 * @param directory - the user's home directory.
 	 * @param boolean - if the operation succeed or not.
 	 */
-	public abstract boolean putHomeDirectory(Number160 key, Directory directory);
+	protected abstract boolean putHomeDirectory(Number160 key, Directory directory);
 	
 	/**
 	 * Method to retrieve a file block.
@@ -93,7 +93,7 @@ public abstract class FileSystemBridge {
 	 * @param buffer - the buffer to store.
 	 * @param boolean - if the operation succeed or not.
 	 */
-	public abstract boolean putFileBlock(Number160 key, ByteBuffer buffer);
+	protected abstract boolean putFileBlock(Number160 key, ByteBuffer buffer);
 	
 	/**
 	 * Method to get the key to be used inside the DHT.

@@ -64,7 +64,7 @@ public class Main {
 	 * a local one.
 	 * FIXME: this should be loaded from a config file.
 	 */
-	final private static int remoteStateTime = 10*60*1000; 
+	final private static int remoteStateTime = 30*60*1000; 
 
 	/**
 	 * Main method.
@@ -84,8 +84,8 @@ public class Main {
 
 				Main.KADEMLIA_BRIDGE = new KademliaBridge(new RemoteBridgeState());
 				System.out.println("Init Kademlia Bridge -> Done");
-				Main.FS_BRIDGE = new SimpleBridgeImpl(Main.KADEMLIA_BRIDGE);
-				//Main.FS_BRIDGE = new CachedBridgeImpl(Main.KADEMLIA_BRIDGE);
+				//Main.FS_BRIDGE = new SimpleBridgeImpl(Main.KADEMLIA_BRIDGE);
+				Main.FS_BRIDGE = new CachedBridgeImpl(Main.KADEMLIA_BRIDGE);
 				System.out.println("Init FS Bridge -> Done");
 				Main.FUSE = new Fuse(Main.FS_BRIDGE, Main.USERNAME, Main.MOUNTPOINT);
 				System.out.println("Init FUSE -> Done");

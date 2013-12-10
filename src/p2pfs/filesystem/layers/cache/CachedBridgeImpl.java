@@ -212,7 +212,17 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 			} 
 			else 
 			{ CachedBridgeImpl.cache.put(key, new CachedObject(super.getFileBlock(key), true)); }
-			return (ByteBuffer)CachedBridgeImpl.cache.get(key).getObject();
+			
+			ByteBuffer cached = (ByteBuffer)CachedBridgeImpl.cache.get(key).getObject();
+			cached.position(0);
+			//ByteBuffer fetched = super.getFileBlock(key);
+			byte[] tmp = new byte[cached.capacity()];
+			cached.get(tmp);
+			ByteBuffer copy = ByteBuffer.wrap(tmp);
+			//System.out.println("BYTEBUFFER COMPARIZON (fetched-cached) =" + fetched.compareTo(cached));
+			//System.out.println("BYTEBUFFER COMPARIZON (fetched-copy) =" + fetched.compareTo(copy));
+			
+			return copy;
 		}
 	}
 
