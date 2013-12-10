@@ -40,8 +40,10 @@ public class SimpleBridgeImpl extends FileSystemBridge {
 	@Override
 	public ByteBuffer getFileBlock(Number160 key) {
 		ByteBuffer bb = null;
-		try 
-		{ bb = ByteBuffer.wrap((byte[])this.dht.get(key)); }		
+		try	{ 
+			Object o = this.dht.get(key);
+			if(o != null) {	bb = ByteBuffer.wrap((byte[])o); } 
+		}		
 		// This should not happen.
 		catch (Throwable e) { e.printStackTrace(); }	
 		return bb;		

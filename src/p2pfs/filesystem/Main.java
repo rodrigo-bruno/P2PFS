@@ -84,8 +84,8 @@ public class Main {
 
 				Main.KADEMLIA_BRIDGE = new KademliaBridge(new RemoteBridgeState());
 				System.out.println("Init Kademlia Bridge -> Done");
-				//Main.FS_BRIDGE = new SimpleBridgeImpl(Main.KADEMLIA_BRIDGE);
-				Main.FS_BRIDGE = new CachedBridgeImpl(Main.KADEMLIA_BRIDGE);
+				Main.FS_BRIDGE = new SimpleBridgeImpl(Main.KADEMLIA_BRIDGE);
+				//Main.FS_BRIDGE = new CachedBridgeImpl(Main.KADEMLIA_BRIDGE);
 				System.out.println("Init FS Bridge -> Done");
 				Main.FUSE = new Fuse(Main.FS_BRIDGE, Main.USERNAME, Main.MOUNTPOINT);
 				System.out.println("Init FUSE -> Done");
