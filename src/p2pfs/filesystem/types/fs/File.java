@@ -97,6 +97,8 @@ public class File extends Path implements Serializable {
 	 * @param size - the final file size.
 	 */
 	public void truncate(final long size, FileSystemBridge fsb){
+		this.size = size;
+		this.numberBlocks = (int) (size/this.blockSize);
 //		ByteBuffer bb = fsb.getFileBlock(this.name, 0);
 //		if (bb != null && size < bb.capacity()) {
 //			// Need to create a new, smaller buffer

@@ -180,6 +180,7 @@ public class PeerThread extends Thread {
 		// setup the dht connection
         peer = new PeerMaker(peerId).
         		setPorts(this.dhtPort).
+        		setEnableIndirectReplication(true).
         		setBindings(new Bindings()).
         		makeAndListen();
         for(String addr : Main.BOOTSTRAP_NODES) {

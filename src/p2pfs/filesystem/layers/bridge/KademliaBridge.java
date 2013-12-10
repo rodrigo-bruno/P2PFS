@@ -71,6 +71,7 @@ public class KademliaBridge {
 	 * @return boolean - if the operation was finished successfully or not.
 	 */
 	public boolean put(Number160 locationKey, Object value) throws Throwable {
+		// TODO: if java.net.SocketException, pedir ao state outro socket
 		synchronized(this) {
 			// writing request.
 			this.state.getPeerOOS().writeObject(new PutDTO(locationKey, value));
