@@ -93,12 +93,12 @@ public class File extends Path implements Serializable {
 	
 	public int read(final ByteBuffer buffer, final long size, final long offset, FileSystemBridge fsb) {
 		if(this.size == 0) { return 0; }
-		final int maxReadIndex = (int) Math.min(size + offset, this.size - 1);
+		final int totalCapacity = (int) (this.numberBlocks*this.blockSize);
+		final int maxReadIndex = (int) Math.min(size + offset, totalCapacity) - 1;
 		final int startBlock = (int) (offset/this.blockSize);
 		final int endBlock = (int) (maxReadIndex/this.blockSize);
-		ByteBuffer bb = getSplittedBlock(startBlock, endBlock, fsb);
 		final long realReadOffset = offset - startBlock*this.blockSize;
-		final int bytesToRead = (int) Math.min(this.size - offset, size);
+		final int bytesToRead = (int) Math.min(totalCapacity - offset, size);
 		final byte[] bytesRead = new byte[bytesToRead];
 		System.out.println("size="+size);
 		System.out.println("offset="+offset);
@@ -109,6 +109,7 @@ public class File extends Path implements Serializable {
 		System.out.println("bytesToRead="+bytesToRead);
 		System.out.println("realReadOffset="+realReadOffset);
 		System.out.println("numberBlocks="+this.numberBlocks);
+		ByteBuffer bb = getSplittedBlock(startBlock, endBlock, fsb);
 		bb.position((int) realReadOffset);
 		bb.get(bytesRead, 0, bytesToRead);
 		buffer.put(bytesRead);
@@ -166,7 +167,7 @@ public class File extends Path implements Serializable {
 	}
 	
 	public int write(final ByteBuffer buffer, final long bufSize, final long writeOffset, FileSystemBridge fsb){
-		final int maxWriteIndex = (int) (writeOffset + bufSize);
+		final int maxWriteIndex = (int) (writeOffset + bufSize) - 1;
 		int startBlock = (int) (writeOffset/this.blockSize);
 		int endBlock = (int) (maxWriteIndex/this.blockSize);
 		ByteBuffer bb = getSplittedBlock(startBlock, endBlock, fsb); // this allocates blocks if needed!	
@@ -202,8 +203,13 @@ public class File extends Path implements Serializable {
 		// create the array that will contain all the file parts
 		ByteBuffer bb = ByteBuffer.allocate((int) (this.blockSize*nblocks));
 		// fill array with existent chunks
-		for(int index = startBlock; index < nblocks && index < this.numberBlocks; index++) 
-		{ bb.put(fsb.getFileBlock(this.name, index));	} 
+		for(	int position = bb.position(), index = startBlock; 
+				index <= endBlock && index < this.numberBlocks; 
+				index++, position += this.blockSize) {  
+			bb.position(position);
+			System.out.println("GET BLOCK " + index);
+			bb.put(fsb.getFileBlock(this.name, index));	
+		} 
 		bb.position(0); // Rewind
 		// updating number of blocks
 		this.numberBlocks = this.numberBlocks < endBlock + 1 ? endBlock + 1 : this.numberBlocks;
@@ -218,18 +224,20 @@ public class File extends Path implements Serializable {
 	 * @param fsb
 	 * @return
 	 */
-	boolean putSplittedBlock(ByteBuffer bb, int startBlock, int endBlock, FileSystemBridge fsb) {
-		// creating an ephemeral buffer to transfer bytes
-		final byte[] transferBuffer = new byte[(int) this.blockSize];
-		int nblocks = endBlock - startBlock + 1;
+	boolean putSplittedBlock(final ByteBuffer bb, int startBlock, int endBlock, FileSystemBridge fsb) {
 		boolean output = false;
 		// for each block, read some bytes and store. 
 		// ATTENTION: the size of the buffer must be divisible by the block size. 
-		for(int index = startBlock; index < nblocks; index++) {
+		for(	int position = bb.position(),index = startBlock; 
+				index <= endBlock; 
+				index++,position += this.blockSize) {
+			// creating an ephemeral buffer to transfer bytes
+			final byte[] transferBuffer = new byte[(int) this.blockSize];
+			bb.position(position);
 			bb.get(transferBuffer);
-			output = 
-					fsb.putFileBlock(this.name, index, ByteBuffer.wrap(transferBuffer)) ? 
-							true : false;
+			System.out.println("PUT BLOCK " + index);
+			boolean tmp = fsb.putFileBlock(this.name, index, ByteBuffer.wrap(transferBuffer));
+			output = output ? tmp : false;
 		}
 		bb.position(0); // Rewind
 		return output;

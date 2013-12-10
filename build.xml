@@ -7,7 +7,7 @@
 	<property name="main-class" value="p2pfs.filesystem.Main" />
 	<property name="java-args-example-p1" value="0 test.me 127.0.0.1" />
 	<property name="java-args-example-p2" value="1 test.me" />
-	<property name="java-args-p2" value="underscore /tmp/p2pfs2" />
+	<property name="java-args-p2" value="underscore /tmp/p2pfs" />
 	<property name="jar-name" value="p2pfs-2" />
 	
   <property name="src.dir" value="${basedir}/src"/>  	  
