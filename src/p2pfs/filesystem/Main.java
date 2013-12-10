@@ -147,6 +147,7 @@ public class Main {
 		System.out.println("Peer Thread Creation -> Done");
 		Main.PEER_THREAD.start();
 
+		/* Gossip threads started here */
         Main.GOSSIP = new Gossip(Main.PEER_THREAD);
 	}
 	

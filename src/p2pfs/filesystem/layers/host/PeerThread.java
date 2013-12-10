@@ -223,6 +223,9 @@ public class PeerThread extends Thread {
 	public int getPeerSize(){
 		return getPeerList().size();
 	}
+	public Peer getPeer(){
+		return peer;
+	}
 	
 	/**
 	 * Method that encapsulates the main functionality.
