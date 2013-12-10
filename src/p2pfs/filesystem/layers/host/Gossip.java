@@ -8,8 +8,10 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.Collection;
 import java.util.List;
 
+import net.tomp2p.futures.FutureDHT;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
 import p2pfs.filesystem.types.dto.*;
@@ -54,7 +56,7 @@ public class Gossip {
 	public static final int RESET = 30000;
 	public static final int START_CHECK = 100; //freq at which node zero checks if it has peers to start gossip
 	public static final int SEND = 2000;
-	public static final int LISTENING_PORT = 4004;
+	public static final int LISTENING_PORT = 40004;
 	
 	private ServerSocket serverSocket;
 	
@@ -79,7 +81,7 @@ public class Gossip {
 		Gossip.id = peerThread.getPeerID();
 		try {
 			serverSocket = new ServerSocket(LISTENING_PORT); //use the same port for gossip listening on all nodes ServerSocket(LISTENING_PORT);
-			serverSocket.bind(null);
+			//serverSocket.bind(null);
 			System.out.println("Listening on port " + serverSocket.getLocalPort());
 
 			initThreads();
@@ -201,6 +203,7 @@ public class Gossip {
 		return r==numPeers ? list.get(numPeers-1) : list.get((int)Math.floor(r));
 	}
 
+	@SuppressWarnings("deprecation")
 	public void initThreads() throws IOException{
 
 		/* Commandline thread */
@@ -230,12 +233,6 @@ public class Gossip {
 							else if(line.length() > 5 && line.substring(0,5).equals("megab")){		
 								updateNumMB(Integer.parseInt(line.substring(6,line.length())));					
 							}
-							// CONNECT
-							else if(line.length() > 7 && line.substring(0,7).equals("connect")){	
-								String[] parts = line.substring(8,line.length()).split(" ");	
-								if(parts.length == 2)	
-									connect(parts[0], Integer.parseInt(parts[1]));
-							}
 							// SHOW GOSSIP
 							else if(line.equals("gossip")){
 								showGossip();					
@@ -246,35 +243,47 @@ public class Gossip {
 							}
 						} 
 						catch (IOException e) {  e.printStackTrace(); }
-						catch (ClassNotFoundException cnfe) {  cnfe.printStackTrace(); }
 					}
 				}
 			}; 
 			cmdThread.start();
 
+	        
 			/* Reset gossip thread which will only run for node zero, responsible for */
 			/* sending gossip messages with a new id once a certain amount of time */
 			/* has passed, so that any connection issues will not make the gossip values */
 			/* diverge from the real values */  
-			if(Gossip.id.compareTo(new Number160(0)) == 0){
-				Thread resetThread = new Thread() {
-					@Override
-					public void run() {	
-						try {
-							while(true){
-								sleep(RESET); 
-								if(peerThread.getPeerSize() > 0){
-									System.out.println("Gossip reset!");
+
+			Thread resetThread = new Thread() {
+				@Override
+				public void run() {	
+					try {
+						while(true){
+							sleep(RESET); 
+							if(peerThread.getPeerSize() > 0){
+								System.out.println("Reset: peerSize > 0");
+								// Get the peerId which is currently responsible for reset
+								Number160 resetId = new Number160(0);
+								FutureDHT futureDHT = peerThread.getPeer().get(resetId).start();
+						        futureDHT.awaitUninterruptibly();
+						        Collection<Number160> keys = futureDHT.getKeys();
+						        for(Number160 key : keys){
+						        	System.out.println("key = " + key.toString());
+						        }
+						        // If it's us, we send the new gossip message
+								if(Gossip.id.compareTo(resetId) == 0){
+									System.out.println("GOSSIP RESET!");
 									String ip = getNextPeer().getInetAddress().getHostAddress();
 									sendReset(ip, LISTENING_PORT);
 								}	
 							}
-						} 
-						catch (Exception ie){ ie.printStackTrace(); }
-					}
-				};
-				resetThread.start();
-			}
+						}
+					} 
+					catch (Exception ie){ ie.printStackTrace(); }
+				}
+			};
+			resetThread.start();
+			
 
 			/* Thread responsible for sending a gossip message to one of this node's peers */
 			Thread sendThread = new Thread(){

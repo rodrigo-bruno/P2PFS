@@ -189,8 +189,7 @@ public class PeerThread extends Thread {
             		setPorts(this.dhtPort).
             		start();
             fb.awaitUninterruptibly();
-            /* COMENTA ESTA LINHA DE BAIXO SE TIVERES PROBLEMAS NO GOSSIP */
-            //new Gossip(this);
+
             if (fb.getBootstrapTo() != null) {
                 peer.
                 discover().
@@ -223,6 +222,9 @@ public class PeerThread extends Thread {
 	}
 	public int getPeerSize(){
 		return getPeerList().size();
+	}
+	public Peer getPeer(){
+		return peer;
 	}
 	
 	/**
