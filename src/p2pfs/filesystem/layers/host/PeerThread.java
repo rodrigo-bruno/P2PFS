@@ -10,7 +10,6 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
-
 import p2pfs.filesystem.Main;
 import p2pfs.filesystem.types.dto.ExceptionDTO;
 import p2pfs.filesystem.types.dto.OperationCompleteDTO;
@@ -23,6 +22,7 @@ import net.tomp2p.p2p.Peer;
 import net.tomp2p.p2p.PeerMaker;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
+import net.tomp2p.storage.StorageGeneric;
 
 /**
  * Class that will hold the server side functionality.
@@ -126,6 +126,11 @@ public class PeerThread extends Thread {
 	final private Peer peer;
 	
 	/**
+	 * FIXME
+	 */
+	final public StorageGeneric storage;
+	
+	/**
 	 * Port to be used for communication within the DHT.
 	 */
 	final private int dhtPort = 9999;
@@ -178,8 +183,9 @@ public class PeerThread extends Thread {
 	public PeerThread(Number160 peerId) throws IOException {
 		super("PeerThread");
 		// setup the dht connection
-        peer = new PeerMaker(peerId).
-        		setPorts(this.dhtPort).
+		PeerMaker pm = new PeerMaker(peerId);
+		this.storage = pm.getStorage();
+        peer = 	pm.setPorts(this.dhtPort).
         		setEnableIndirectReplication(true).
         		setBindings(new Bindings()).
         		makeAndListen();
@@ -214,7 +220,7 @@ public class PeerThread extends Thread {
 		this.clientThreads = new ArrayList<Thread>();
 	}
 	
-	//ADDED
+	// Used by the Gossip
 	public Number160 getPeerID(){
 		return this.peer.getPeerID();
 	}
@@ -226,6 +232,12 @@ public class PeerThread extends Thread {
 	}
 	public Peer getPeer(){
 		return peer;
+	}
+	public int getNumberClients() {
+		return clientThreads.size();
+	}
+	public StorageGeneric getStorage() {
+		return storage;
 	}
 	
 	/**
