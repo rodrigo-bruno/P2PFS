@@ -5,13 +5,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.Collection;
 import java.util.List;
 
-import net.tomp2p.futures.FutureDHT;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
 import p2pfs.filesystem.types.dto.*;
@@ -57,11 +56,16 @@ public class Gossip {
 	public static final int START_CHECK = 100; //freq at which node zero checks if it has peers to start gossip
 	public static final int SEND = 2000;
 	public static final int LISTENING_PORT = 40004;
+	public static final int GOSSIP_MGMT_PORT = 40005;
+	public static final int REPLICATION_LEVEL = 1;
+	public static final String[] responsibleNodes = {"planetlab-1.tagus.ist.utl.pt", "planetlab-2.tagus.ist.utl.pt"};
 	
 	private ServerSocket serverSocket;
+	private ServerSocket mgmtSocket;
 	
 	public static Number160 id;
 	public static int currentGossip = 0;
+	public static String hostname;
 
 	public static float localSu = 0;
 	public static float localSa = 0;
@@ -80,9 +84,17 @@ public class Gossip {
 		this.peerThread = peerThread;
 		Gossip.id = peerThread.getPeerID();
 		try {
-			serverSocket = new ServerSocket(LISTENING_PORT); //use the same port for gossip listening on all nodes ServerSocket(LISTENING_PORT);
+			//use the same port for gossip listening on all nodes
+			serverSocket = new ServerSocket(LISTENING_PORT); 
 			//serverSocket.bind(null);
 			System.out.println("Listening on port " + serverSocket.getLocalPort());
+			
+			//use the same port for gossip management on all nodes
+			mgmtSocket = new ServerSocket(GOSSIP_MGMT_PORT); 
+			//serverSocket.bind(null);
+			System.out.println("Management listening on port " + mgmtSocket.getLocalPort());
+			hostname = InetAddress.getLocalHost().getHostName();
+			System.out.println("Hostname: "+ hostname);
 
 			initThreads();
 	
@@ -100,19 +112,19 @@ public class Gossip {
 
 	public void showGossip(){
 			System.out.printf("Num of nodes= %f\n", getCountNodes());
-			System.out.printf("Total num users= %f\n", getNumUsers());
-			System.out.printf("Total num active users= %f\n", getNumActive());
-			System.out.printf("Avg num files per node= %f\n", getNumFiles());
-			System.out.printf("Avg num MB per node= %f\n", getNumMB());
+			System.out.printf("Total num users= %f\n", getNumUsers()/REPLICATION_LEVEL);
+			System.out.printf("Total num active users= %f\n", getNumActive()/REPLICATION_LEVEL);
+			System.out.printf("Avg num files per node= %f\n", getNumFiles()/REPLICATION_LEVEL);
+			System.out.printf("Avg num MB per node= %f\n", getNumMB()/REPLICATION_LEVEL);
 	}
 
 	/* When there are no peers, the response to the user query is the self values */
 	public void showSelf(){
 			System.out.printf( "Num of nodes= 1\n" );
-			System.out.printf( "Total num users= %f\n", Gossip.localSu );
-			System.out.printf( "Total num active users= %f\n", Gossip.localSa);
-			System.out.printf( "Avg num files per node= %f\n", Gossip.localSs );
-			System.out.printf( "Avg num MB per node= %f\n", Gossip.localSm );
+			System.out.printf( "Total num users= %f\n", Gossip.localSu/REPLICATION_LEVEL );
+			System.out.printf( "Total num active users= %f\n", Gossip.localSa/REPLICATION_LEVEL);
+			System.out.printf( "Avg num files per node= %f\n", Gossip.localSs/REPLICATION_LEVEL );
+			System.out.printf( "Avg num MB per node= %f\n", Gossip.localSm/REPLICATION_LEVEL );
 	}		
 
 	public double getCountNodes(){
@@ -203,7 +215,6 @@ public class Gossip {
 		return r==numPeers ? list.get(numPeers-1) : list.get((int)Math.floor(r));
 	}
 
-	@SuppressWarnings("deprecation")
 	public void initThreads() throws IOException{
 
 		/* Commandline thread */
@@ -254,32 +265,40 @@ public class Gossip {
 			/* has passed, so that any connection issues will not make the gossip values */
 			/* diverge from the real values */  
 
+			
 			Thread resetThread = new Thread() {
 				@Override
 				public void run() {	
-					try {
-						while(true){
+					while(true){
+						try{
 							sleep(RESET); 
-							if(peerThread.getPeerSize() > 0){
-								System.out.println("Reset: peerSize > 0");
-								// Get the peerId which is currently responsible for reset
-								Number160 resetId = new Number160(0);
-								FutureDHT futureDHT = peerThread.getPeer().get(resetId).start();
-						        futureDHT.awaitUninterruptibly();
-						        Collection<Number160> keys = futureDHT.getKeys();
-						        for(Number160 key : keys){
-						        	System.out.println("key = " + key.toString());
-						        }
-						        // If it's us, we send the new gossip message
-								if(Gossip.id.compareTo(resetId) == 0){
-									System.out.println("GOSSIP RESET!");
-									String ip = getNextPeer().getInetAddress().getHostAddress();
-									sendReset(ip, LISTENING_PORT);
-								}	
+						}catch(InterruptedException ie){ie.printStackTrace();}
+						if(peerThread.getPeerSize() > 0){
+							// Get the peerId which is currently responsible for reset
+							for(String node : Gossip.responsibleNodes){
+								try{
+							        // If it's us, we send the new gossip message
+									if(Gossip.hostname.equals(node)){
+										System.out.println("GOSSIP RESET!\n");
+										String ip = getNextPeer().getInetAddress().getHostAddress();
+										sendReset(ip, LISTENING_PORT);
+										break;
+									}	
+									// If not we check the connectivity of that node to see if it's available
+									else{
+										Socket cs = connect(node, GOSSIP_MGMT_PORT);
+										System.out.printf("RESET by node: "+node+"\n");
+										cs.close();
+										break;
+									}
+								}
+								catch(UnknownHostException uhe) {}
+								catch(Exception ie){ ie.printStackTrace(); }
 							}
+
 						}
-					} 
-					catch (Exception ie){ ie.printStackTrace(); }
+					}
+	 
 				}
 			};
 			resetThread.start();
@@ -324,11 +343,11 @@ public class Gossip {
 		Gossip.Ss /= 2;
 		Gossip.Sm /= 2;
 
-
 		try{
 			Socket cs = connect(ip, port);
 
-			System.out.printf("Sending Gossip Message to"+ cs.toString() + " with gossipId %d\n", Gossip.currentGossip);
+			System.out.printf("Sending Gossip msg to "+ cs.getInetAddress().getHostAddress()+":"+
+					cs.getPort() + " with gossipId %d\n", Gossip.currentGossip);
 			new ObjectOutputStream(cs.getOutputStream()).writeObject(new GossipDTO(Gossip.currentGossip , Gossip.id, Gossip.W1, Gossip.Su, Gossip.Sn, Gossip.Sa, Gossip.W2, Gossip.Ss, Gossip.Sm));
 			cs.close();
 		}catch (ClassNotFoundException cnfe) {  cnfe.printStackTrace(); }
@@ -338,7 +357,6 @@ public class Gossip {
 		try{
 			Socket cs = connect(ip, port);
 
-			System.out.println("Gossip reset!");
 			new ObjectOutputStream(cs.getOutputStream()).writeObject(new GossipDTO(Gossip.currentGossip + 1, Gossip.id, 1, 0, 0, 0, 0, 0, 0));
 			cs.close();
 		}catch (ClassNotFoundException cnfe){  cnfe.printStackTrace(); }
