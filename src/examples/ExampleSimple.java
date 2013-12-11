@@ -2,6 +2,7 @@ package examples;
 
 import java.io.IOException;
 import java.net.Inet4Address;
+import java.util.Map;
 
 import net.tomp2p.connection.Bindings;
 import net.tomp2p.futures.FutureDHT;
@@ -9,18 +10,20 @@ import net.tomp2p.futures.FutureBootstrap;
 import net.tomp2p.p2p.Peer;
 import net.tomp2p.p2p.PeerMaker;
 import net.tomp2p.peers.Number160;
+import net.tomp2p.peers.Number480;
 import net.tomp2p.storage.Data;
+import net.tomp2p.storage.StorageGeneric;
 
 public class ExampleSimple {
 
     final private Peer peer;
+    private Map<Number480,Data> sg;
 
     public ExampleSimple(int peerId) throws Exception {
     	Bindings b = new Bindings("lo");
-        peer = new PeerMaker(Number160.createHash(peerId)).
-        		setPorts(4000 + peerId).
-        		setBindings(b).
-        		makeAndListen();
+    	PeerMaker pm = new PeerMaker(Number160.createHash(peerId));
+    	sg = pm.getStorage().map();
+        peer = pm.setPorts(4000 + peerId).setBindings(b).makeAndListen();
         FutureBootstrap fb = peer.bootstrap().setInetAddress(Inet4Address.getByName("127.0.0.1")).setPorts(4000).start();
         if (fb.getBootstrapTo() != null) {
             peer.discover().setPeerAddress(fb.getBootstrapTo().iterator().next()).start().awaitUninterruptibly();
@@ -31,8 +34,10 @@ public class ExampleSimple {
         ExampleSimple dns = new ExampleSimple(Integer.parseInt(args[0]));
         if (args.length == 3) {
             dns.store(args[1], args[2]);
-        	// FIXME: new objects, User no longer exits.
-        	//dns.store2(args[1], new User());
+            for(Map.Entry<Number480, Data> entry : dns.sg.entrySet()) {
+            	System.out.println(entry.getKey()+"\t"+entry.getValue().getLength());	
+            }
+            
         }
         if (args.length == 2) {
             System.out.println("Name:" + args[1] + " IP:" + dns.get(args[1]));
@@ -48,20 +53,10 @@ public class ExampleSimple {
         }
         return "not found";
     }
-    private String get2(String name) throws ClassNotFoundException, IOException {
-        FutureDHT futureDHT = peer.get(Number160.createHash(name)).start();
-        futureDHT.awaitUninterruptibly();
-        if (futureDHT.isSuccess()) {
-            return futureDHT.getData().getObject().toString();
-        }
-        return "not found";
-    }
 
     private void store(String name, String ip) throws IOException {
         peer.put(Number160.createHash(name)).setData(new Data(ip)).start().awaitUninterruptibly();
+        peer.put(Number160.createHash("chave1")).setData(new Data("ola")).start().awaitUninterruptibly();
+        peer.put(Number160.createHash("chavao")).setData(new Data("adeus")).start().awaitUninterruptibly();
     }
-    // FIXME: User no longer exists
-//    private void store2(String username, User user) throws IOException {
-//        peer.put(Number160.createHash(username)).setData(new Data(user)).start().awaitUninterruptibly();
-//    }
 }

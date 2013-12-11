@@ -22,6 +22,14 @@ public class Directory extends Path implements Serializable {
 	 * List of containing file system objects.
 	 */
 	protected final List<Path> contents = new ArrayList<Path>();
+	
+	/**
+	 * Total number of files for a user.
+	 * NOTE that this attribute will only be used when the instance of this
+	 * class represents the home directory of a user. For every other scenario,
+	 * the value will be always 0.
+	 */
+	protected int numberFiles = 0;
 
 	/**
 	 * Constructor.
@@ -103,4 +111,14 @@ public class Directory extends Path implements Serializable {
 	 */
 	public void read(final DirectoryFiller filler)
 	{ for (final Path p : contents)	{ filler.add(p.name); }	}
+	
+	/**
+	 * Setter.
+	 */
+	public void addFile() { this.numberFiles++; }
+	
+	/**
+	 * Getter.
+	 */
+	public int getTotalNumberFiles() { return this.numberFiles; }
 }

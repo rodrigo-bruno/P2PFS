@@ -100,6 +100,7 @@ public class Fuse extends FuseFilesystemAdapterAssumeImplemented {
 		final Path parent = this.getParentPath(home,path);
 		if (parent instanceof Directory) {
 			((Directory) parent).mkfile(getLastComponent(path));
+			home.addFile();
 			this.storeHomeDirectory(home);
 			return 0;
 		}

@@ -3,11 +3,13 @@
 
 	<property file="${basedir}/build.properties" />
 
-	<property name="main-example-class" value="examples.ExampleSimple" />
+	<property name="main-simple-class" value="examples.ExampleSimple" />
+	<property name="main-nat-class" value="examples.ExampleNAT" />
 	<property name="main-class" value="p2pfs.filesystem.Main" />
-	<property name="java-args-example-p1" value="0 test.me 127.0.0.1" />
-	<property name="java-args-example-p2" value="1 test.me" />
-	<property name="java-args-p2" value="underscore /tmp/p2pfs" />
+	<property name="java-args-simple-p1" value="0 test.me 127.0.0.1" />
+	<property name="java-args-simple-p2" value="1 test.me" />
+	<property name="java-args-nat-p2" value="0 test.me 127.0.0.1" />
+	<property name="java-args-p2" value="underscore /tmp/p2pfs2" />
 	<property name="jar-name" value="p2pfs-2" />
 	
   <property name="src.dir" value="${basedir}/src"/>  	  
@@ -53,11 +55,20 @@
     </copy>
   </target>
 
-  <target name="jar-example" depends="compile" description="Make jar">
+  <target name="jar-simple" depends="compile" description="Make jar">
     <property name="jar.properties.list" value="log4j.properties, slf4.properties"/>
     <jar jarfile="${build.dir}/${jar-name}.jar" basedir="${build.classes}">
       <manifest>
-          <attribute name="Main-Class" value="${main-example-class}"/>
+          <attribute name="Main-Class" value="${main-simple-class}"/>
+      </manifest>
+    </jar>
+  </target>
+	
+  <target name="jar-nat" depends="compile" description="Make jar">
+    <property name="jar.properties.list" value="log4j.properties, slf4.properties"/>
+    <jar jarfile="${build.dir}/${jar-name}.jar" basedir="${build.classes}">
+      <manifest>
+          <attribute name="Main-Class" value="${main-nat-class}"/>
       </manifest>
     </jar>
   </target>
@@ -75,15 +86,15 @@
 	  <delete dir="${build.classes}" includeEmptyDirs="true" followSymlinks="false" />
 	</target>
 	
-  <target name="run-example-p1" depends="jar-example">
+  <target name="run-simple-p1" depends="jar-simple">
     <java jar="${build.dir}/${jar-name}.jar" fork="true">
-      <arg line="${java-args-example-p1}"/>
+      <arg line="${java-args-simple-p1}"/>
     </java>
   </target>
 	
-  <target name="run-example-p2" depends="jar-example">
+  <target name="run-simple-p2" depends="jar-simple">
     <java jar="${build.dir}/${jar-name}.jar" fork="true">
-    	<arg line="${java-args-example-p2}"/>
+    	<arg line="${java-args-simple-p2}"/>
     </java>
   </target>
 	

@@ -1,8 +1,12 @@
 package p2pfs.filesystem;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.concurrent.locks.Lock;
+
+import com.sun.org.apache.bcel.internal.generic.INSTANCEOF;
 
 import p2pfs.filesystem.layers.bridge.KademliaBridge;
 import p2pfs.filesystem.layers.bridge.LocalBridgeState;
@@ -12,8 +16,13 @@ import p2pfs.filesystem.layers.cache.FileSystemBridge;
 import p2pfs.filesystem.layers.fuse.Fuse;
 import p2pfs.filesystem.layers.host.Gossip;
 import p2pfs.filesystem.layers.host.PeerThread;
+import p2pfs.filesystem.types.fs.Directory;
 
 import net.tomp2p.peers.Number160;
+import net.tomp2p.peers.Number480;
+import net.tomp2p.storage.Data;
+import net.tomp2p.storage.KeyLock;
+import net.tomp2p.storage.Storage;
 
 /**
  * Main class.
@@ -61,8 +70,8 @@ public class Main {
 	 * Arrays of addresses for the bootstraping nodes.
 	 * FIXME: this should be loaded from a config file.
 	 */
-	final public static String[] BOOTSTRAP_NODES = {"planetlab-1.tagus.ist.utl.pt", "planetlab-2.tagus.ist.utl.pt"};
-	//final public static String[] BOOTSTRAP_NODES = {"127.0.0.1"};
+	//final public static String[] BOOTSTRAP_NODES = {"planetlab-1.tagus.ist.utl.pt", "planetlab-2.tagus.ist.utl.pt"};
+	final public static String[] BOOTSTRAP_NODES = {"127.0.0.1"};
 	
 	/**
 	 * Time in milliseconds until a node using a remote bridge state changes to 
@@ -102,13 +111,7 @@ public class Main {
 				System.out.println("Init Peer Thread -> Done");
 
 				Main.KADEMLIA_BRIDGE = new KademliaBridge(new LocalBridgeState());
-				System.out.println("Init Kademlia Bridge -> Done");
-
-				Main.KADEMLIA_BRIDGE.put(Number160.createHash("key"), "value");
-				System.out.println("Inserting <key,value> -> Done");
-
-				String value = (String) Main.KADEMLIA_BRIDGE.get(Number160.createHash("key"));
-				System.out.println("Retrieving <"+value+"> -> Done");			
+				System.out.println("Init Kademlia Bridge -> Done");			
 			} 
 			// error case
 			else {
@@ -120,9 +123,28 @@ public class Main {
 			Runtime.getRuntime().addShutdownHook(Main.getShutdownThread());
 
 			// TODO: command line to see information?
-			Scanner input = new Scanner(System.in);
-			while (input.hasNextLine()) { }
-
+			while (true) {
+				if(Main.PEER_THREAD != null) {
+					int blockn = 0;
+					int usern = 0;
+					int filesn = 0;
+					int runningn = Main.PEER_THREAD.getNumberClients(); // the host is a self client
+					int activen = runningn + (Main.USERNAME == null ? -1 : 0);
+					KeyLock<Storage> keylock = Main.PEER_THREAD.getStorage().getLockStorage();
+					Lock lock = keylock.lock(Main.PEER_THREAD.getStorage());
+					for(Map.Entry<Number480, Data> entry : Main.PEER_THREAD.storage.map().entrySet()) {
+						if(entry.getValue().getLength() == 131099) { blockn++; }
+						else if(entry.getValue().getObject() instanceof Directory){
+							filesn += ((Directory) entry.getValue().getObject()).getTotalNumberFiles();
+							usern++; 
+						}
+						else { System.out.println("WARNING: Storage object not recognized!"); }
+					}
+					keylock.unlock(Main.PEER_THREAD.storage, lock);
+					System.out.println("Users="+usern+", blocks="+blockn+", files="+filesn+", running="+runningn+", active="+activen);
+				}
+				Thread.sleep(5*1000);
+			}
 		}
 
 		catch(IOException e) { throw e; }
