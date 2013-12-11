@@ -180,6 +180,7 @@ public class PeerThread extends Thread {
 		// setup the dht connection
         peer = new PeerMaker(peerId).
         		setPorts(this.dhtPort).
+        		setEnableIndirectReplication(true).
         		setBindings(new Bindings()).
         		makeAndListen();
         for(String addr : Main.BOOTSTRAP_NODES) {
@@ -213,7 +214,7 @@ public class PeerThread extends Thread {
 		this.clientThreads = new ArrayList<Thread>();
 	}
 	
-	//ADDED
+	// Used by the Gossip
 	public Number160 getPeerID(){
 		return this.peer.getPeerID();
 	}
