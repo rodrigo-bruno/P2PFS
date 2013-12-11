@@ -27,6 +27,9 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 	 */
 	class CachedObject {
 		
+		// TODO: add parameter to know if it came from a read or not!
+		// TODO: from a read we only have to drop it.
+		
 		/**
 		 * Real cached object.
 		 */
@@ -43,11 +46,19 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 		int timeInCache = 0;
 		
 		/**
+		 * Represents if the object was read or not.
+		 * This will produce different behavior when flushing.
+		 */
+		boolean read = false;
+		
+		/**
 		 * Constructor.
 		 * @param o - see doc.
 		 */
-		CachedObject(Object o) 
-		{ this.o = o; }
+		CachedObject(Object o, boolean read) { 
+			this.o = o;
+			this.read = read;
+		}
 		
 		/**
 		 * Getters.
@@ -55,6 +66,7 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 		Object getObject() { return this.o; }
 		int getTimeToFlush() { return this.timeToFlush; }
 		int getTimeInCache() { return this.timeInCache; }
+		boolean getRead() { return this.read; }
 		
 		/**
 		 * Setters.
@@ -62,6 +74,7 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 		void setTimeToFlush(int timeToFlush) { this.timeToFlush = timeToFlush; }
 		void setTimeInCache(int timeInCache) { this.timeInCache = timeInCache; }
 		void setObject(Object o) { this.o = o; }
+		void setRead(boolean read) { this.read = read; }
 		
 	}
 	
@@ -107,14 +120,17 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 						co.setTimeToFlush(ttf);
 						// if the object should be flushed.
 						if(tic >= Mtic || ttf == 0) {
-							Object o = co.getObject();
-							if(o instanceof Directory) 
-							{ this.cdi.superPutHomeDirectory(entry.getKey(), (Directory)o); } 
-							else if (o instanceof ByteBuffer) 
-							{ this.cdi.superPutFileBlock(entry.getKey(), (ByteBuffer)o);	} 
-							else { 
-								try { throw new Exception("Unknown cache object class!"); }
-								catch (Exception e) { e.printStackTrace(); }
+							// only care if it was write. Reads are just discarded.
+							if (!co.getRead()) { 
+								Object o = co.getObject();
+								if(o instanceof Directory) 
+								{ this.cdi.superPutHomeDirectory(entry.getKey(), (Directory)o); } 
+								else if (o instanceof ByteBuffer) 
+								{ this.cdi.superPutFileBlock(entry.getKey(), (ByteBuffer)o);	} 
+								else { 
+									try { throw new Exception("Unknown cache object class!"); }
+									catch (Exception e) { e.printStackTrace(); }
+								}
 							}
 							removed.add(entry.getKey());
 						}
@@ -177,7 +193,7 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 				co.setTimeToFlush(MIN_TIME_IN_CACHE);
 			} 
 			else 
-			{ CachedBridgeImpl.cache.put(key, new CachedObject(super.getHomeDirectory(key))); }
+			{ CachedBridgeImpl.cache.put(key, new CachedObject(super.getHomeDirectory(key), true)); }
 			return (Directory)CachedBridgeImpl.cache.get(key).getObject();
 		}
 	}
@@ -195,8 +211,14 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 				co.setTimeToFlush(MIN_TIME_IN_CACHE);
 			} 
 			else 
-			{ CachedBridgeImpl.cache.put(key, new CachedObject(super.getFileBlock(key))); }
-			return (ByteBuffer)CachedBridgeImpl.cache.get(key).getObject();
+			{ CachedBridgeImpl.cache.put(key, new CachedObject(super.getFileBlock(key), true)); }
+			// To maintain the coherence with the other implementation (and to 
+			// prevent strange bugs) we return a copy of the array. 
+			ByteBuffer cached = (ByteBuffer)CachedBridgeImpl.cache.get(key).getObject();
+			cached.position(0);
+			byte[] tmp = new byte[cached.capacity()];
+			cached.get(tmp);
+			return ByteBuffer.wrap(tmp);
 		}
 	}
 
@@ -209,11 +231,12 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 		synchronized (this) {
 			if(CachedBridgeImpl.cache.containsKey(key)) { 
 				CachedObject co = CachedBridgeImpl.cache.get(key);
+				co.setRead(false);
 				co.setObject(directory);
 				co.setTimeInCache(co.getTimeInCache() + MIN_TIME_IN_CACHE - co.getTimeToFlush());
 				co.setTimeToFlush(MIN_TIME_IN_CACHE);
 			}
-			else { CachedBridgeImpl.cache.put(key, new CachedObject(directory)); }
+			else { CachedBridgeImpl.cache.put(key, new CachedObject(directory, false)); }
 			return true; // TODO: Fake true... Better solution?
 		}
 		
@@ -228,11 +251,12 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 		synchronized (this) {
 			if(CachedBridgeImpl.cache.containsKey(key)) { 
 				CachedObject co = CachedBridgeImpl.cache.get(key);
+				co.setRead(false);
 				co.setObject(buffer);
 				co.setTimeInCache(co.getTimeInCache() + MIN_TIME_IN_CACHE - co.getTimeToFlush());
 				co.setTimeToFlush(MIN_TIME_IN_CACHE);
 			}
-			else { CachedBridgeImpl.cache.put(key, new CachedObject(buffer)); }
+			else { CachedBridgeImpl.cache.put(key, new CachedObject(buffer, false)); }
 			return true; // TODO: Fake true... Better solution?
 		}
 	}
