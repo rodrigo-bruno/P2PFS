@@ -36,9 +36,10 @@ public class SimpleBridgeImpl extends FileSystemBridge {
 
 	/**
 	 * see base doc.
+	 * Note: this implementation will not make any use of the given hash.
 	 */
 	@Override
-	public ByteBuffer getFileBlock(Number160 key) {
+	public ByteBuffer getFileBlock(Number160 key, int hash) {
 		ByteBuffer bb = null;
 		try	{ 
 			Object o = this.dht.get(key);
@@ -63,9 +64,10 @@ public class SimpleBridgeImpl extends FileSystemBridge {
 
 	/**
 	 * see base doc.
+	 * Note: this implementation will not make any use of the given hash.
 	 */
 	@Override
-	public boolean putFileBlock(Number160 key, ByteBuffer bb) {
+	public boolean putFileBlock(Number160 key, ByteBuffer bb, int hash) {
 		boolean b = false;
 		try 
 		{ b = this.dht.put(key, bb.array()); } 

@@ -26,10 +26,7 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 	 * cache.
 	 */
 	class CachedObject {
-		
-		// TODO: add parameter to know if it came from a read or not!
-		// TODO: from a read we only have to drop it.
-		
+				
 		/**
 		 * Real cached object.
 		 */
@@ -52,12 +49,23 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 		boolean read = false;
 		
 		/**
+		 * Hash code for the object o.
+		 */
+		int hash = 0;
+		
+		/**
 		 * Constructor.
 		 * @param o - see doc.
 		 */
-		CachedObject(Object o, boolean read) { 
+		CachedObject(Object o, boolean read, int hash) { 
 			this.o = o;
 			this.read = read;
+			this.hash = hash;
+		}
+		
+		CachedObject(Object o, boolean read) {
+			this.read = read;
+			this.o = o;
 		}
 		
 		/**
@@ -67,6 +75,7 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 		int getTimeToFlush() { return this.timeToFlush; }
 		int getTimeInCache() { return this.timeInCache; }
 		boolean getRead() { return this.read; }
+		int getHash() { return this.hash; }
 		
 		/**
 		 * Setters.
@@ -105,6 +114,7 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 			int Mtic = CachedBridgeImpl.MAX_TIME_IN_CACHE;
 			while(true) {
 				System.out.println("Cache refresh begun!");
+				int sentBlocks = 0;
 				synchronized (this.cdi) {
 					// list that will keep flushed objects.
 					List<Number160> removed = new ArrayList<Number160>();; 
@@ -112,30 +122,40 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 					for(Map.Entry<Number160, CachedObject> entry : CachedBridgeImpl.cache.entrySet()) {
 						CachedObject co = entry.getValue();
 						int tic = co.getTimeInCache() + ri;
-						int ttf = co.getTimeToFlush() - ri;
+						int ttf = co.getTimeToFlush() - ri; 
 						
-						System.out.println("Cached Object: tic="+tic+", ttf="+ttf);
+						System.out.println("Cached Object: tic="+tic+", ttf="+ttf+", dirty="+!co.getRead());
 						
 						co.setTimeInCache(tic);
 						co.setTimeToFlush(ttf);
 						// if the object should be flushed.
-						if(tic >= Mtic || ttf == 0) {
-							// only care if it was write. Reads are just discarded.
+						if(tic >= Mtic || ttf <= 0) {
+							// if the file was modified. Reads are just discarded.
 							if (!co.getRead()) { 
 								Object o = co.getObject();
-								if(o instanceof Directory) 
-								{ this.cdi.superPutHomeDirectory(entry.getKey(), (Directory)o); } 
-								else if (o instanceof ByteBuffer) 
-								{ this.cdi.superPutFileBlock(entry.getKey(), (ByteBuffer)o);	} 
+								if(o instanceof Directory) { 
+									this.cdi.superPutHomeDirectory(entry.getKey(), (Directory)o);
+									// force re-fetch to keep meta data up to date.
+									removed.add(entry.getKey()); 
+								} 
+								else if (o instanceof ByteBuffer) { 
+									if(sentBlocks++ < CachedBridgeImpl.MAX_FLUSH_BURST) {
+										this.cdi.superPutFileBlock(entry.getKey(), (ByteBuffer)o, co.getHash());
+										// after flushing, keep a copy
+										co.setRead(true);
+									}
+								} 
 								else { 
 									try { throw new Exception("Unknown cache object class!"); }
 									catch (Exception e) { e.printStackTrace(); }
 								}
 							}
-							removed.add(entry.getKey());
+							else {
+								removed.add(entry.getKey()); // perform hash comparizon
+							}
 						}
 					}
-					// remove objects from cache.
+					// remove objects from cache. // this will no longer be neede?
 					for(Number160 key : removed) { CachedBridgeImpl.cache.remove(key); }
 				}
 				System.out.println("Cache refresh ended!");
@@ -161,7 +181,12 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 	/**
 	 * Number of seconds between a cache check.
 	 */
-	public static int REFRESH_INTERVAL = 10;
+	public static int REFRESH_INTERVAL = 1;
+	
+	/**
+	 * TODO
+	 */
+	public static int MAX_FLUSH_BURST = 10;
 	
 	/**
 	 * The cache itself =)
@@ -203,15 +228,18 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 	 * its not possible, it uses the DHT, stores the result on cache and returns.
 	 */
 	@Override
-	public ByteBuffer getFileBlock(Number160 key) {
+	public ByteBuffer getFileBlock(Number160 key, int hash) {
 		synchronized (this) {
 			if(CachedBridgeImpl.cache.containsKey(key)) {
 				CachedObject co = CachedBridgeImpl.cache.get(key);
 				co.setTimeInCache(co.getTimeInCache() + MIN_TIME_IN_CACHE - co.getTimeToFlush());
 				co.setTimeToFlush(MIN_TIME_IN_CACHE);
+				// test if the hash matched
+				// if yes, okey
+				// if not, refetch
 			} 
 			else 
-			{ CachedBridgeImpl.cache.put(key, new CachedObject(super.getFileBlock(key), true)); }
+			{ CachedBridgeImpl.cache.put(key, new CachedObject(super.getFileBlock(key,hash), true, hash)); }
 			// To maintain the coherence with the other implementation (and to 
 			// prevent strange bugs) we return a copy of the array. 
 			ByteBuffer cached = (ByteBuffer)CachedBridgeImpl.cache.get(key).getObject();
@@ -247,7 +275,7 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 	 * its not possible, it uses the DHT, stores the result on cache and returns.
 	 */
 	@Override
-	public boolean putFileBlock(Number160 key, ByteBuffer buffer) {
+	public boolean putFileBlock(Number160 key, ByteBuffer buffer, int hash) {
 		synchronized (this) {
 			if(CachedBridgeImpl.cache.containsKey(key)) { 
 				CachedObject co = CachedBridgeImpl.cache.get(key);
@@ -256,7 +284,7 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 				co.setTimeInCache(co.getTimeInCache() + MIN_TIME_IN_CACHE - co.getTimeToFlush());
 				co.setTimeToFlush(MIN_TIME_IN_CACHE);
 			}
-			else { CachedBridgeImpl.cache.put(key, new CachedObject(buffer, false)); }
+			else { CachedBridgeImpl.cache.put(key, new CachedObject(buffer, false, hash)); }
 			return true; // TODO: Fake true... Better solution?
 		}
 	}
@@ -265,13 +293,9 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 	 * Methods to force the super class implementation (without cache)
 	 * These methods are not synchronized!
 	 */
-	public Directory superGetHomeDirectory(Number160 key) 
-	{ return super.getHomeDirectory(key); }
-	public ByteBuffer superGetFileBlock(Number160 key) 
-	{ return super.getFileBlock(key); }
 	public boolean superPutHomeDirectory(Number160 key, Directory directory) 
 	{ return super.putHomeDirectory(key, directory); }
-	public boolean superPutFileBlock(Number160 key, ByteBuffer buffer) 
-	{ return super.putFileBlock(key, buffer); }
+	public boolean superPutFileBlock(Number160 key, ByteBuffer buffer, int hash) 
+	{ return super.putFileBlock(key, buffer, hash); }
 	
 }

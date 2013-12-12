@@ -48,17 +48,19 @@ public abstract class FileSystemBridge {
 	 * Method to retrieve a file block.
 	 * @param filePath - the path to the file that contains the block.
 	 * @param blockNumber - the number of the block.
+	 * @param hash - the hash of the FileBlock that we want.
 	 * @return - a byte buffer or null if it fails
 	 */
-	public ByteBuffer getFileBlock(String filePath, int blockNumber) 
-	{ return this.getFileBlock(this.constructFileBlock(filePath, blockNumber)); }
+	public ByteBuffer getFileBlock(String filePath, int blockNumber, int hash) 
+	{ return this.getFileBlock(this.constructFileBlock(filePath, blockNumber), hash); }
 	
 	/**
 	 * Method to retrieve a file block.
 	 * @param key - the DHT key.
+	 * @param hash - the hash of the FileBlock that we want.
 	 * @return - a byte buffer or null if it fails
 	 */
-	protected abstract ByteBuffer getFileBlock(Number160 key);
+	protected abstract ByteBuffer getFileBlock(Number160 key, int hash);
 	
 	/**
 	 * Method to store the user's Home Directory.
@@ -82,18 +84,20 @@ public abstract class FileSystemBridge {
 	 * @param filePath - the path to the file that contains the block.
 	 * @param blockNumber - the number of the block.
 	 * @param buffer - the buffer to store.
+	 * @param hash - the hash code for the buffer we are writing.
 	 * @param boolean - if the operation succeed or not.
 	 */
-	public boolean putFileBlock(String filePath, int blockNumber, ByteBuffer buffer) 
-	{ return this.putFileBlock(this.constructFileBlock(filePath, blockNumber), buffer); }
+	public boolean putFileBlock(String filePath, int blockNumber, ByteBuffer buffer, int hash) 
+	{ return this.putFileBlock(this.constructFileBlock(filePath, blockNumber), buffer, hash); }
 
 	/**
 	 * Method to retrieve a file block.
 	 * @param key - the DHT key.
 	 * @param buffer - the buffer to store.
+	 * @param hash - the hash code for the buffer we are writing.
 	 * @param boolean - if the operation succeed or not.
 	 */
-	protected abstract boolean putFileBlock(Number160 key, ByteBuffer buffer);
+	protected abstract boolean putFileBlock(Number160 key, ByteBuffer buffer, int hash);
 	
 	/**
 	 * Method to get the key to be used inside the DHT.

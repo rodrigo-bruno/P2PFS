@@ -2,6 +2,8 @@ package p2pfs.filesystem.types.fs;
 
 import java.io.Serializable;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
 import p2pfs.filesystem.layers.cache.FileSystemBridge;
 
@@ -19,10 +21,9 @@ public class File extends Path implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
 	/**
-	 * TODO: we need the hashes of the file blocks so that we can see if we need
-	 * to download again a file block or not. -> feito na camada acima?
-	 * 
+	 * TODO
 	 */
+	private final Map<String, Integer> hashes = new HashMap<String, Integer>();
 	
 	/**
 	 * Size of the file (in bytes).
@@ -159,8 +160,9 @@ public class File extends Path implements Serializable {
 				index <= endBlock && index < this.numberBlocks; 
 				index++, position += this.blockSize) {  
 			bb.position(position);
-			System.out.println("GET BLOCK " + index);
-			bb.put(fsb.getFileBlock(this.name, index));	
+			int hash = this.hashes.get(new String(this.name+index)).intValue();
+			System.out.println("GET BLOCK " + index + ", hash="+hash);
+			bb.put(fsb.getFileBlock(this.name, index, hash));	
 		} 
 		bb.position(0);
 		// updating number of blocks
@@ -189,8 +191,11 @@ public class File extends Path implements Serializable {
 			final byte[] transferBuffer = new byte[(int) this.blockSize];
 			bb.position(position);
 			bb.get(transferBuffer);
-			System.out.println("PUT BLOCK " + index);
-			boolean tmp = fsb.putFileBlock(this.name, index, ByteBuffer.wrap(transferBuffer));
+			// put hash code into map
+			int hash = transferBuffer.hashCode();
+			this.hashes.put(new String(this.name+index), hash);
+			System.out.println("PUT BLOCK " + index + ", hash="+hash);
+			boolean tmp = fsb.putFileBlock(this.name, index, ByteBuffer.wrap(transferBuffer),hash );
 			output = output ? tmp : false;
 		}
 		bb.position(0);

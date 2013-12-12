@@ -3,10 +3,7 @@ package p2pfs.filesystem;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Random;
-import java.util.Scanner;
 import java.util.concurrent.locks.Lock;
-
-import com.sun.org.apache.bcel.internal.generic.INSTANCEOF;
 
 import p2pfs.filesystem.layers.bridge.KademliaBridge;
 import p2pfs.filesystem.layers.bridge.LocalBridgeState;
