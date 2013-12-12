@@ -70,7 +70,7 @@ public class Main {
 	 * a local one.
 	 * FIXME: this should be loaded from a config file.
 	 */
-	final private static int remoteStateTime = 30*60*1000; 
+	final private static int remoteStateTime = 5*1000; 
 
 	/**
 	 * Main method.
@@ -148,30 +148,6 @@ public class Main {
 				} 
 				catch (IOException e) {  e.printStackTrace(); }
 			}
-			
-			/*
-			while (true) {
-				if(Main.PEER_THREAD != null) {
-					int blockn = 0;
-					int usern = 0;
-					int filesn = 0;
-					int runningn = Main.PEER_THREAD.getNumberClients(); // the host is a self client
-					int activen = runningn + (Main.USERNAME == null ? -1 : 0);
-					KeyLock<Storage> keylock = Main.PEER_THREAD.getStorage().getLockStorage();
-					Lock lock = keylock.lock(Main.PEER_THREAD.getStorage());
-					for(Map.Entry<Number480, Data> entry : Main.PEER_THREAD.storage.map().entrySet()) {
-						if(entry.getValue().getLength() == 131099) { blockn++; }
-						else if(entry.getValue().getObject() instanceof Directory){
-							filesn += ((Directory) entry.getValue().getObject()).getTotalNumberFiles();
-							usern++; 
-						}
-						else { System.out.println("WARNING: Storage object not recognized!"); }
-					}
-					keylock.unlock(Main.PEER_THREAD.storage, lock);
-					System.out.println("Users="+usern+", blocks="+blockn+", files="+filesn+", running="+runningn+", active="+activen);
-				}
-				Thread.sleep(5*1000);
-			} */
 		}
 
 		catch(IOException e) { throw e; }
@@ -188,15 +164,10 @@ public class Main {
 	 * connecting to the DTH, ...
 	 */
 	public static void initPeerThread() throws IOException {
-		// Using the username as the key for the peer and its own files is going
-		// to be more efficient when accessing to data!
-		if(Main.USERNAME != null)
-		{ Main.PEER_THREAD = new PeerThread(Number160.createHash(Main.USERNAME)); }
-		// For the ones only hosting files a random id does the job.
-		else
-		{ Main.PEER_THREAD = new PeerThread(new Number160(new Random())); }
+		Main.PEER_THREAD = new PeerThread(new Number160(new Random())); 
 		System.out.println("Peer Thread Creation -> Done");
 		Main.PEER_THREAD.start();
+		Main.KADEMLIA_BRIDGE.setState(new LocalBridgeState());
 
 		/* Gossip threads started here */
         Main.GOSSIP = new Gossip(Main.PEER_THREAD);

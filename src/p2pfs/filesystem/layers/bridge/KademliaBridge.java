@@ -92,9 +92,10 @@ public class KademliaBridge {
 	 * This method is synchronized since we might need to change to used socket
 	 * and we don't want to do it in the middle of an operation.
 	 * @param state - the new state.
+	 * @throws IOException - might be thrown when closing the socket.
 	 */
-	public void setState(BridgeState state) 
-	{ synchronized(this) { this.state = state; } }
+	public void setState(BridgeState state) throws IOException 
+	{ synchronized(this) { this.state.getPeerSocket().close(); this.state = state; } }
 	
 	/**
 	 * Getter.
