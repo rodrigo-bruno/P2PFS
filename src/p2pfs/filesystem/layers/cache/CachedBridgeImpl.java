@@ -131,25 +131,20 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 						co.setTimeToFlush(ttf);
 						// if the object should be flushed.
 						if(tic >= Mtic || ttf <= 0) {
+							Object o = co.getObject();
 							// if the file was modified it must be pushed to the DHT.
-							if (!co.getRead()) { 
-								Object o = co.getObject();
-								if(o instanceof Directory) { 
-									this.cdi.superPutHomeDirectory(entry.getKey(), (Directory)o);
-									// force re-fetch to keep meta data up to date.
-									removed.add(entry.getKey()); 
-								} 
-								else if (o instanceof ByteBuffer) { 
-									if(sentBlocks++ < CachedBridgeImpl.MAX_FLUSH_BURST) {
-										this.cdi.superPutFileBlock(entry.getKey(), (ByteBuffer)o, co.getHash());
-										// after flushing, keep a copy
-										co.setRead(true);
-									}
-								} 
-								else { 
-									try { throw new Exception("Unknown cache object class!"); }
-									catch (Exception e) { e.printStackTrace(); }
+							if (!co.getRead() && (o instanceof ByteBuffer)) { 
+								if(sentBlocks++ < CachedBridgeImpl.MAX_FLUSH_BURST) {
+									this.cdi.superPutFileBlock(entry.getKey(), (ByteBuffer)o, co.getHash());
+									// after flushing, keep a copy
+									co.setRead(true);
 								}
+							} 
+							// home directories are to be flushed periodically.
+							else if(o instanceof Directory) { 
+								this.cdi.superPutHomeDirectory(entry.getKey(), (Directory)o);
+								// force re-fetch to keep meta data up to date.
+								removed.add(entry.getKey()); 
 							}
 						}
 					}
