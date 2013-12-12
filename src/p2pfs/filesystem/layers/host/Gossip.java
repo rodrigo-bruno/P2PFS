@@ -9,10 +9,18 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.locks.Lock;
 
 import net.tomp2p.peers.Number160;
+import net.tomp2p.peers.Number480;
 import net.tomp2p.peers.PeerAddress;
+import net.tomp2p.storage.Data;
+import net.tomp2p.storage.KeyLock;
+import net.tomp2p.storage.Storage;
+import p2pfs.filesystem.Main;
 import p2pfs.filesystem.types.dto.*;
+import p2pfs.filesystem.types.fs.Directory;
 
 class ClientSocketThread extends Thread {
 	Gossip sv;
@@ -132,7 +140,6 @@ public class Gossip {
 
 	public void updateNumUsers(float users){
 		Gossip.Su += users;	
-		Gossip.localSu += users;
 	}
 	public double getNumUsers(){
 		return Gossip.Su/Gossip.W1; 
@@ -140,7 +147,6 @@ public class Gossip {
 
 	public void updateNumActive(float users){
 		Gossip.Sa += users;
-		Gossip.localSa += users;
 	}
 	public double getNumActive(){
 		return Gossip.Sa/Gossip.W1; 
@@ -148,7 +154,6 @@ public class Gossip {
 
 	public void updateNumFiles(float files){
 		Gossip.Ss += files;
-		Gossip.localSs += files;
 	}
 	public double getNumFiles(){
 		return Gossip.Ss/Gossip.W2; 
@@ -156,10 +161,24 @@ public class Gossip {
 
 	public void updateNumMB(float mb){
 		Gossip.Sm += mb;
-		Gossip.localSm += mb;
 	}
 	public double getNumMB(){
 		return Gossip.Sm/Gossip.W2; 
+	}
+	public void updateGossip(int usern, int activen, int filesn, int blockn){
+
+		float oldSu = Gossip.localSu;
+		float oldSa = Gossip.localSa;
+		float oldSs = Gossip.localSs;
+		float oldSm = Gossip.localSm;
+		Gossip.localSu = usern;
+		Gossip.localSa = activen;
+		Gossip.localSs = filesn;
+		Gossip.localSm = blockn*131099/1024/1024;
+		updateNumUsers(Gossip.localSu - oldSu);
+		updateNumActive(Gossip.localSa - oldSa);
+		updateNumFiles(Gossip.localSs - oldSs);
+		updateNumMB(Gossip.localSm - oldSm);
 	}
 
 
@@ -225,9 +244,6 @@ public class Gossip {
 			@Override
 			public void run() {	
 				while(true){
-					try{
-						sleep(RESET); 
-					}catch(InterruptedException ie){ie.printStackTrace();}
 					if(peerThread.getPeerSize() > 0){
 						// Get the peerId which is currently responsible for reset
 						for(String node : Gossip.responsibleNodes){
@@ -248,10 +264,14 @@ public class Gossip {
 								}
 							}
 							catch(UnknownHostException uhe) {}
+							catch(ConnectException ce){  }
 							catch(Exception ie){ ie.printStackTrace(); }
 						}
 
 					}
+					try{
+						sleep(RESET); 
+					}catch(InterruptedException ie){ie.printStackTrace();}
 				}
  
 			}
@@ -300,26 +320,29 @@ public class Gossip {
 		Gossip.Ss /= 2;
 		Gossip.Sm /= 2;
 		
-		//TODO
-		/*
 		int blockn = 0;
 		int usern = 0;
 		int filesn = 0;
-		int runningn = Main.PEER_THREAD.getNumberClients(); // the host is a self client
+		int runningn = peerThread.getNumberClients(); // the host is a self client
 		int activen = runningn + (Main.USERNAME == null ? -1 : 0);
-		KeyLock<Storage> keylock = Main.PEER_THREAD.getStorage().getLockStorage();
-		Lock lock = keylock.lock(Main.PEER_THREAD.getStorage());
-		for(Map.Entry<Number480, Data> entry : Main.PEER_THREAD.storage.map().entrySet()) {
+		KeyLock<Storage> keylock = peerThread.getStorage().getLockStorage();
+		
+		Lock lock = keylock.lock(peerThread.getStorage());
+		for(Map.Entry<Number480, Data> entry : peerThread.storage.map().entrySet()) {
 			if(entry.getValue().getLength() == 131099) { blockn++; }
-			else if(entry.getValue().getObject() instanceof Directory){
-				filesn += ((Directory) entry.getValue().getObject()).getTotalNumberFiles();
-				usern++; 
-			}
-			else { System.out.println("WARNING: Storage object not recognized!"); }
+			else 
+				try{
+					if(entry.getValue().getObject() instanceof Directory){
+						filesn += ((Directory) entry.getValue().getObject()).getTotalNumberFiles();
+						usern++; 
+					}
+					else { System.out.println("WARNING: Storage object not recognized!"); }
+				}catch(ClassNotFoundException cnfe){cnfe.printStackTrace();}
 		}
-		keylock.unlock(Main.PEER_THREAD.storage, lock);
-		System.out.println("Users="+usern+", blocks="+blockn+", files="+filesn+", running="+runningn+", active="+activen);
-*/
+		keylock.unlock(peerThread.storage, lock);
+		updateGossip(usern, activen, filesn, blockn);
+		//System.out.println("Users="+usern+", blocks="+blockn+", files="+filesn+", running="+runningn+", active="+activen);
+
 		
 		
 		try{
