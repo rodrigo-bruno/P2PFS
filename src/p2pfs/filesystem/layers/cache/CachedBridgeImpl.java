@@ -84,6 +84,7 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 		void setTimeInCache(int timeInCache) { this.timeInCache = timeInCache; }
 		void setObject(Object o) { this.o = o; }
 		void setRead(boolean read) { this.read = read; }
+		void setHash(int hash) { this.hash = hash; }
 		
 	}
 	
@@ -130,7 +131,7 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 						co.setTimeToFlush(ttf);
 						// if the object should be flushed.
 						if(tic >= Mtic || ttf <= 0) {
-							// if the file was modified. Reads are just discarded.
+							// if the file was modified it must be pushed to the DHT.
 							if (!co.getRead()) { 
 								Object o = co.getObject();
 								if(o instanceof Directory) { 
@@ -150,12 +151,9 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 									catch (Exception e) { e.printStackTrace(); }
 								}
 							}
-							else {
-								removed.add(entry.getKey()); // perform hash comparizon
-							}
 						}
 					}
-					// remove objects from cache. // this will no longer be neede?
+					// remove objects from cache (will remove the home dir)
 					for(Number160 key : removed) { CachedBridgeImpl.cache.remove(key); }
 				}
 				System.out.println("Cache refresh ended!");
@@ -184,7 +182,9 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 	public static int REFRESH_INTERVAL = 1;
 	
 	/**
-	 * TODO
+	 * The maximum number of blocks that are flushed to the DHT each time the
+	 * cache is refreshed.
+	 * NOTE: This can be adapted according to the available bandwidth.
 	 */
 	public static int MAX_FLUSH_BURST = 10;
 	
@@ -232,11 +232,13 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 		synchronized (this) {
 			if(CachedBridgeImpl.cache.containsKey(key)) {
 				CachedObject co = CachedBridgeImpl.cache.get(key);
-				co.setTimeInCache(co.getTimeInCache() + MIN_TIME_IN_CACHE - co.getTimeToFlush());
-				co.setTimeToFlush(MIN_TIME_IN_CACHE);
-				// test if the hash matched
-				// if yes, okey
-				// if not, refetch
+				if(co.getHash() == hash) {
+					co.setTimeInCache(co.getTimeInCache() + MIN_TIME_IN_CACHE - co.getTimeToFlush());
+					co.setTimeToFlush(MIN_TIME_IN_CACHE);
+				}
+				// if the block in cache is out dated.
+				else 
+				{ CachedBridgeImpl.cache.put(key, new CachedObject(super.getFileBlock(key,hash), true, hash)); }
 			} 
 			else 
 			{ CachedBridgeImpl.cache.put(key, new CachedObject(super.getFileBlock(key,hash), true, hash)); }
@@ -283,6 +285,7 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 				co.setObject(buffer);
 				co.setTimeInCache(co.getTimeInCache() + MIN_TIME_IN_CACHE - co.getTimeToFlush());
 				co.setTimeToFlush(MIN_TIME_IN_CACHE);
+				co.setHash(hash);
 			}
 			else { CachedBridgeImpl.cache.put(key, new CachedObject(buffer, false, hash)); }
 			return true; // TODO: Fake true... Better solution?

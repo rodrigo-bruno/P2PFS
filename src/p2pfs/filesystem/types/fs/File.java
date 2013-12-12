@@ -21,7 +21,8 @@ public class File extends Path implements Serializable {
 	private static final long serialVersionUID = 1L;
 	
 	/**
-	 * TODO
+	 * Mapping between a file block and a hash. This will be used to maitain in
+	 * cache up to date copies of blocks.
 	 */
 	private final Map<String, Integer> hashes = new HashMap<String, Integer>();
 	
@@ -100,19 +101,6 @@ public class File extends Path implements Serializable {
 	public void truncate(final long size, FileSystemBridge fsb){
 		this.size = size;
 		this.numberBlocks = (int) (size/this.blockSize);
-//		ByteBuffer bb = fsb.getFileBlock(this.name, 0);
-//		if (bb != null && size < bb.capacity()) {
-//			// Need to create a new, smaller buffer
-//			int newCapacity = (int) (size/this.blockSize);
-//			newCapacity = size % this.blockSize == 0 ? newCapacity : newCapacity + 1;
-//			final ByteBuffer newContents = ByteBuffer.allocate((int) (newCapacity*this.blockSize));
-//			final byte[] bytesRead = new byte[(int) size];
-//			bb.get(bytesRead);
-//			newContents.put(bytesRead);
-//			bb = newContents;
-//			this.size = bb.capacity(); // Fix file size.
-//			fsb.putFileBlock(this.name, 0, bb);
-//		}
 	}
 
 	/**
@@ -160,7 +148,8 @@ public class File extends Path implements Serializable {
 				index <= endBlock && index < this.numberBlocks; 
 				index++, position += this.blockSize) {  
 			bb.position(position);
-			int hash = this.hashes.get(new String(this.name+index)).intValue();
+			int hash; 
+			synchronized(this.hashes) { hash = this.hashes.get(new String(this.name+index)).intValue(); }
 			System.out.println("GET BLOCK " + index + ", hash="+hash);
 			bb.put(fsb.getFileBlock(this.name, index, hash));	
 		} 
@@ -193,7 +182,7 @@ public class File extends Path implements Serializable {
 			bb.get(transferBuffer);
 			// put hash code into map
 			int hash = transferBuffer.hashCode();
-			this.hashes.put(new String(this.name+index), hash);
+			synchronized(this.hashes) { this.hashes.put(new String(this.name+index), hash); }
 			System.out.println("PUT BLOCK " + index + ", hash="+hash);
 			boolean tmp = fsb.putFileBlock(this.name, index, ByteBuffer.wrap(transferBuffer),hash );
 			output = output ? tmp : false;
