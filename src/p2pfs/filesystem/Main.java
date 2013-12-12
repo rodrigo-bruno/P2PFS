@@ -1,9 +1,9 @@
 package p2pfs.filesystem;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.Map;
+import java.io.InputStreamReader;
 import java.util.Random;
-import java.util.concurrent.locks.Lock;
 
 import p2pfs.filesystem.layers.bridge.KademliaBridge;
 import p2pfs.filesystem.layers.bridge.LocalBridgeState;
@@ -13,13 +13,8 @@ import p2pfs.filesystem.layers.cache.FileSystemBridge;
 import p2pfs.filesystem.layers.fuse.Fuse;
 import p2pfs.filesystem.layers.host.Gossip;
 import p2pfs.filesystem.layers.host.PeerThread;
-import p2pfs.filesystem.types.fs.Directory;
 
 import net.tomp2p.peers.Number160;
-import net.tomp2p.peers.Number480;
-import net.tomp2p.storage.Data;
-import net.tomp2p.storage.KeyLock;
-import net.tomp2p.storage.Storage;
 
 /**
  * Main class.
@@ -119,7 +114,42 @@ public class Main {
 			// Shutdown mechanism and protection.
 			Runtime.getRuntime().addShutdownHook(Main.getShutdownThread());
 
-			// TODO: command line to see information?
+			BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+			while(true) {
+				try	{
+					
+					String line = br.readLine();
+					// ADD REMOVE USERS
+					if(line.length() > 5 && line.substring(0,5).equals("users")){		
+						GOSSIP.updateNumUsers(Integer.parseInt(line.substring(6,line.length())));					
+						//System.out.println(Integer.parseInt(line.substring(6,line.length())));
+					}
+					// ADD REMOVE ACTIVE USERS
+					if(line.length() > 5 && line.substring(0,5).equals("activ")){		
+						GOSSIP.updateNumActive(Integer.parseInt(line.substring(6,line.length())));					
+						//System.out.println(Integer.parseInt(line.substring(6,line.length())));
+					}
+					// ADD REMOVE FILES
+					else if(line.length() > 5 && line.substring(0,5).equals("files")){		
+						GOSSIP.updateNumFiles(Integer.parseInt(line.substring(6,line.length())));					
+					}
+					// ADD REMOVE MB
+					else if(line.length() > 5 && line.substring(0,5).equals("megab")){		
+						GOSSIP.updateNumMB(Integer.parseInt(line.substring(6,line.length())));					
+					}
+					// SHOW GOSSIP
+					else if(line.equals("gossip")){
+						GOSSIP.showGossip();					
+					}
+					// SHOW PEERS
+					else if(line.equals("peers")){	
+						GOSSIP.showPeers();
+					}
+				} 
+				catch (IOException e) {  e.printStackTrace(); }
+			}
+			
+			/*
 			while (true) {
 				if(Main.PEER_THREAD != null) {
 					int blockn = 0;
@@ -141,7 +171,7 @@ public class Main {
 					System.out.println("Users="+usern+", blocks="+blockn+", files="+filesn+", running="+runningn+", active="+activen);
 				}
 				Thread.sleep(5*1000);
-			}
+			} */
 		}
 
 		catch(IOException e) { throw e; }

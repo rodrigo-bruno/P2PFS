@@ -1,10 +1,9 @@
 package p2pfs.filesystem.layers.host;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.ConnectException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -216,124 +215,82 @@ public class Gossip {
 	}
 
 	public void initThreads() throws IOException{
-
-		/* Commandline thread */
-		Thread cmdThread = new Thread() {				
-				@Override
-				public void run() {
-					BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-					while(true) {
-						try	{
-							
-							String line = br.readLine();
-							// ADD REMOVE USERS
-							if(line.length() > 5 && line.substring(0,5).equals("users")){		
-								updateNumUsers(Integer.parseInt(line.substring(6,line.length())));					
-								//System.out.println(Integer.parseInt(line.substring(6,line.length())));
-							}
-							// ADD REMOVE ACTIVE USERS
-							if(line.length() > 5 && line.substring(0,5).equals("activ")){		
-								updateNumActive(Integer.parseInt(line.substring(6,line.length())));					
-								//System.out.println(Integer.parseInt(line.substring(6,line.length())));
-							}
-							// ADD REMOVE FILES
-							else if(line.length() > 5 && line.substring(0,5).equals("files")){		
-								updateNumFiles(Integer.parseInt(line.substring(6,line.length())));					
-							}
-							// ADD REMOVE MB
-							else if(line.length() > 5 && line.substring(0,5).equals("megab")){		
-								updateNumMB(Integer.parseInt(line.substring(6,line.length())));					
-							}
-							// SHOW GOSSIP
-							else if(line.equals("gossip")){
-								showGossip();					
-							}
-							// SHOW PEERS
-							else if(line.equals("peers")){	
-								showPeers();
-							}
-						} 
-						catch (IOException e) {  e.printStackTrace(); }
-					}
-				}
-			}; 
-			cmdThread.start();
-
-	        
-			/* Reset gossip thread which will only run for node zero, responsible for */
-			/* sending gossip messages with a new id once a certain amount of time */
-			/* has passed, so that any connection issues will not make the gossip values */
-			/* diverge from the real values */  
-
-			
-			Thread resetThread = new Thread() {
-				@Override
-				public void run() {	
-					while(true){
-						try{
-							sleep(RESET); 
-						}catch(InterruptedException ie){ie.printStackTrace();}
-						if(peerThread.getPeerSize() > 0){
-							// Get the peerId which is currently responsible for reset
-							for(String node : Gossip.responsibleNodes){
-								try{
-							        // If it's us, we send the new gossip message
-									if(Gossip.hostname.equals(node)){
-										System.out.println("GOSSIP RESET!\n");
-										String ip = getNextPeer().getInetAddress().getHostAddress();
-										sendReset(ip, LISTENING_PORT);
-										break;
-									}	
-									// If not we check the connectivity of that node to see if it's available
-									else{
-										Socket cs = connect(node, GOSSIP_MGMT_PORT);
-										System.out.printf("RESET by node: "+node+"\n");
-										cs.close();
-										break;
-									}
+      
+		/* Reset gossip thread which will only run for node zero, responsible for */
+		/* sending gossip messages with a new id once a certain amount of time */
+		/* has passed, so that any connection issues will not make the gossip values */
+		/* diverge from the real values */  
+		
+		Thread resetThread = new Thread() {
+			@Override
+			public void run() {	
+				while(true){
+					try{
+						sleep(RESET); 
+					}catch(InterruptedException ie){ie.printStackTrace();}
+					if(peerThread.getPeerSize() > 0){
+						// Get the peerId which is currently responsible for reset
+						for(String node : Gossip.responsibleNodes){
+							try{
+						        // If it's us, we send the new gossip message
+								if(Gossip.hostname.equals(node)){
+									System.out.println("GOSSIP RESET!\n");
+									String ip = getNextPeer().getInetAddress().getHostAddress();
+									sendReset(ip, LISTENING_PORT);
+									break;
+								}	
+								// If not we check the connectivity of that node to see if it's available
+								else{
+									Socket cs = connect(node, GOSSIP_MGMT_PORT);
+									System.out.printf("RESET by node: "+node+"\n");
+									cs.close();
+									break;
 								}
-								catch(UnknownHostException uhe) {}
-								catch(Exception ie){ ie.printStackTrace(); }
 							}
-
+							catch(UnknownHostException uhe) {}
+							catch(Exception ie){ ie.printStackTrace(); }
 						}
-					}
-	 
-				}
-			};
-			resetThread.start();
-			
 
-			/* Thread responsible for sending a gossip message to one of this node's peers */
-			Thread sendThread = new Thread(){
-				@Override
-				public void run() {	
+					}
+				}
+ 
+			}
+		};
+		resetThread.start();
+		
+
+		/* Thread responsible for sending a gossip message to one of this node's peers */
+		Thread sendThread = new Thread(){
+			@Override
+			public void run() {	
+				while(true){
 					try {
-						while(true){
-							sleep(SEND); 
-							// Send a new gossip message to another peer
-							if(peerThread.getPeerSize() > 0){
-								String ip = getNextPeer().getInetAddress().getHostAddress();
-								sendGossip(ip, LISTENING_PORT);
-							}
+						sleep(SEND); 
+						// Send a new gossip message to another peer
+						if(peerThread.getPeerSize() > 0){
+							String ip = getNextPeer().getInetAddress().getHostAddress();
+							sendGossip(ip, LISTENING_PORT);
 						}
 					} 
+					catch(ConnectException ce){  }
 					catch (Exception ie){ ie.printStackTrace(); }
 				}
-			};
-			sendThread.start();
+			}
+		};
+		sendThread.start();
 
-			/* Thread responsible for listening to incoming connections for gossip */
-			Thread recThread = new Thread(){
-				@Override
-				public void run() {	
-					try{
-						acceptConnections();
-					}catch(Exception e){ e.printStackTrace(); }
-				}
-			};
-			recThread.start();
+		/* Thread responsible for listening to incoming connections for gossip */
+		Thread recThread = new Thread(){
+			@Override
+			public void run() {	
+				try{
+					acceptConnections();
+				}catch(Exception e){ e.printStackTrace(); }
+			}
+		};
+		recThread.start();
 	}
+	
 	public void sendGossip(String ip, int port) throws IOException{
 		Gossip.W1 /= 2;
 		Gossip.Su /= 2;
@@ -342,7 +299,29 @@ public class Gossip {
 		Gossip.W2 /= 2;
 		Gossip.Ss /= 2;
 		Gossip.Sm /= 2;
-
+		
+		//TODO
+		/*
+		int blockn = 0;
+		int usern = 0;
+		int filesn = 0;
+		int runningn = Main.PEER_THREAD.getNumberClients(); // the host is a self client
+		int activen = runningn + (Main.USERNAME == null ? -1 : 0);
+		KeyLock<Storage> keylock = Main.PEER_THREAD.getStorage().getLockStorage();
+		Lock lock = keylock.lock(Main.PEER_THREAD.getStorage());
+		for(Map.Entry<Number480, Data> entry : Main.PEER_THREAD.storage.map().entrySet()) {
+			if(entry.getValue().getLength() == 131099) { blockn++; }
+			else if(entry.getValue().getObject() instanceof Directory){
+				filesn += ((Directory) entry.getValue().getObject()).getTotalNumberFiles();
+				usern++; 
+			}
+			else { System.out.println("WARNING: Storage object not recognized!"); }
+		}
+		keylock.unlock(Main.PEER_THREAD.storage, lock);
+		System.out.println("Users="+usern+", blocks="+blockn+", files="+filesn+", running="+runningn+", active="+activen);
+*/
+		
+		
 		try{
 			Socket cs = connect(ip, port);
 
