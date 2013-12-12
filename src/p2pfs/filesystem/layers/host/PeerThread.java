@@ -170,6 +170,12 @@ public class PeerThread extends Thread {
 	private ArrayList<Thread> clientThreads = null; 
 	
 	/**
+	 * Number of alive clients. Note that a node only hosting files might be
+	 * a self client (check Main to see if it is).
+	 */
+	private static int ALIVE_CLIENTS = 0;
+	
+	/**
 	 * Flag that indicates if the thread was interrupted.
 	 */
 	private boolean interrupted = false;
@@ -234,7 +240,7 @@ public class PeerThread extends Thread {
 		return peer;
 	}
 	public int getNumberClients() {
-		return clientThreads.size();
+		synchronized (this) { return PeerThread.ALIVE_CLIENTS; }
 	}
 	public StorageGeneric getStorage() {
 		return storage;
@@ -259,6 +265,7 @@ public class PeerThread extends Thread {
 				if(clientConnection != null) {
 					Thread t = new Thread(this.getClientRunnable(clientConnection));
 					this.clientThreads.add(t);	
+					synchronized (this) { PeerThread.ALIVE_CLIENTS++; }
 					t.start();
 					System.out.println("New client!");
 				}
@@ -271,6 +278,7 @@ public class PeerThread extends Thread {
 			// threads already dead will not feel the interrupt =)
 			for(Thread t : this.clientThreads) { t.interrupt(); }
 			try { 
+				synchronized (this) { PeerThread.ALIVE_CLIENTS = 0; }
 				this.fsSocket.close();
 				this.peer.shutdown();
 			}
@@ -341,6 +349,7 @@ public class PeerThread extends Thread {
 				catch (IOException e) {	e.printStackTrace(); } 
 				finally {
 					System.out.println("Client killed!");
+					synchronized (this) { PeerThread.ALIVE_CLIENTS--; }
 					try { clientConnection.close(); }
 					// if closing the socket fails
 					catch (IOException e) { e.printStackTrace(); }
