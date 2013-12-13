@@ -330,14 +330,15 @@ public class Gossip {
 		
 		Lock lock = keylock.lock(peerThread.getStorage());
 		for(Map.Entry<Number480, Data> entry : peerThread.storage.map().entrySet()) {
-			if(entry.getValue().getLength() == 131099) { blockn++; }
+			int size = entry.getValue().getLength();
+			if(size == 131099) { blockn++; }
 			else 
 				try{
 					if(entry.getValue().getObject() instanceof Directory){
 						filesn += ((Directory) entry.getValue().getObject()).getTotalNumberFiles();
 						usern++; 
 					}
-					else { System.out.println("WARNING: Storage object not recognized!"); }
+					else { System.out.println("WARNING: Storage object not recognized (size="+size+"!"); }
 				}catch(ClassNotFoundException cnfe){cnfe.printStackTrace();}
 		}
 		keylock.unlock(peerThread.storage, lock);

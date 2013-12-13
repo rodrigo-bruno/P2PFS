@@ -37,9 +37,9 @@ public class File extends Path implements Serializable {
 	private int numberBlocks = 0;
 	
 	/**
-	 * Max size for each block (in bytes) = 128Kb.
+	 * Max size for each block (in bytes) = 32Kb.
 	 */
-	private long blockSize = 128*1024;
+	private long blockSize = 32*1024;
 	
 	/**
 	 * Constructor.
