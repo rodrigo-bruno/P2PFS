@@ -125,8 +125,6 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 						int tic = co.getTimeInCache() + ri;
 						int ttf = co.getTimeToFlush() - ri; 
 						
-						System.out.println("Cached Object: tic="+tic+", ttf="+ttf+", dirty="+!co.getRead());
-						
 						co.setTimeInCache(tic);
 						co.setTimeToFlush(ttf);
 						// if the object should be flushed.
@@ -135,13 +133,15 @@ public class CachedBridgeImpl extends SimpleBridgeImpl {
 							// if the file was modified it must be pushed to the DHT.
 							if (!co.getRead() && (o instanceof ByteBuffer)) { 
 								if(sentBlocks++ < CachedBridgeImpl.MAX_FLUSH_BURST) {
+									System.out.println("Flusing Cached Block: tic="+tic+", ttf="+ttf);
 									this.cdi.superPutFileBlock(entry.getKey(), (ByteBuffer)o, co.getHash());
 									// after flushing, keep a copy
 									co.setRead(true);
 								}
 							} 
 							// home directories are to be flushed periodically.
-							else if(o instanceof Directory) { 
+							else if(o instanceof Directory) {
+								System.out.println("Flusing Cached Metadata: tic="+tic+", ttf="+ttf);
 								this.cdi.superPutHomeDirectory(entry.getKey(), (Directory)o);
 								// force re-fetch to keep meta data up to date.
 								removed.add(entry.getKey()); 
