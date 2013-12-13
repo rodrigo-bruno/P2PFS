@@ -21,6 +21,7 @@ import net.tomp2p.storage.Storage;
 import p2pfs.filesystem.Main;
 import p2pfs.filesystem.types.dto.*;
 import p2pfs.filesystem.types.fs.Directory;
+import p2pfs.filesystem.types.fs.File;
 
 class ClientSocketThread extends Thread {
 	Gossip sv;
@@ -331,7 +332,7 @@ public class Gossip {
 		Lock lock = keylock.lock(peerThread.getStorage());
 		for(Map.Entry<Number480, Data> entry : peerThread.storage.map().entrySet()) {
 			int size = entry.getValue().getLength();
-			if(size == 131099) { blockn++; }
+			if(size == File.BLOCK_SIZE + 27) { blockn++; }
 			else 
 				try{
 					if(entry.getValue().getObject() instanceof Directory){
