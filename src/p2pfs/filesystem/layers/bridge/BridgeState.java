@@ -46,7 +46,7 @@ public abstract class BridgeState {
 	 * @return - the new socket.
 	 */
 	public Socket getNewPeerSocket() {
-		int rand = new Random().nextInt();
+		int rand = new Random().nextInt(Main.BOOTSTRAP_NODES.length);
 		String tryAddr;
 		while(true) {
 			tryAddr = Main.BOOTSTRAP_NODES[(rand++)%Main.BOOTSTRAP_NODES.length];
