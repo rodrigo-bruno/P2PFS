@@ -62,7 +62,10 @@ public class Main {
 	 * Arrays of addresses for the bootstraping nodes.
 	 * FIXME: this should be loaded from a config file.
 	 */
-	final public static String[] BOOTSTRAP_NODES = {"planetlab-1.tagus.ist.utl.pt", "planetlab-2.tagus.ist.utl.pt"};
+	final public static String[] BOOTSTRAP_NODES = {
+		"planetlab-1.tagus.ist.utl.pt", 
+		"planetlab-2.tagus.ist.utl.pt"
+	};
 	//final public static String[] BOOTSTRAP_NODES = {"127.0.0.1"};
 	
 	/**
@@ -70,7 +73,7 @@ public class Main {
 	 * a local one.
 	 * FIXME: this should be loaded from a config file.
 	 */
-	final private static int remoteStateTime = 5*1000; 
+	final private static int remoteStateTime = 15*1000; 
 
 	/**
 	 * Main method.
@@ -167,7 +170,8 @@ public class Main {
 		Main.PEER_THREAD = new PeerThread(new Number160(new Random())); 
 		System.out.println("Peer Thread Creation -> Done");
 		Main.PEER_THREAD.start();
-		Main.KADEMLIA_BRIDGE.setState(new LocalBridgeState());
+		
+		if(Main.USERNAME) { Main.KADEMLIA_BRIDGE.setState(new LocalBridgeState()); }
 
 		/* Gossip threads started here */
         Main.GOSSIP = new Gossip(Main.PEER_THREAD);
