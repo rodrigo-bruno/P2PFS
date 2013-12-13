@@ -66,7 +66,7 @@ public class Gossip {
 	public static final int LISTENING_PORT = 40004;
 	public static final int GOSSIP_MGMT_PORT = 40005;
 	public static final int REPLICATION_FACTOR = 5;
-	public static final String[] responsibleNodes = {"planetlab-1.tagus.ist.utl.pt", "planetlab-2.tagus.ist.utl.pt"};
+	public static final String[] responsibleNodes = Main.BOOTSTRAP_NODES;
 	
 	private ServerSocket serverSocket;
 	private ServerSocket mgmtSocket;
