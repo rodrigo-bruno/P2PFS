@@ -141,7 +141,7 @@ All gossip messages have an id, that identifies the current gossip version of th
 Regarding the critical evaluation of the developed protocol, we will point out some aspects that we believe to be significant strengths or weaknesses.\\
 Starting by the division of files by blocks. Dividing a file in several blocks allows us to only fetch the blocks needed for some operation instead of storing and reading the complete file at once. This is a big advantage in terms of speed and used bandwidth. However, in a simple implementation like ours, we incur in some waste of space. This is mainly due to the fact that we use fixed length blocks. As that being the last block of each file, or a file with just one block may not be filled up completely. The bigger the file block is, the bigger the wasted space becomes.\\
 The cache is another important feature. It allows us to write and read much faster. We are also able to throttle the write rate to make sure that the user will not get stuck after writing a file. However, the downside of this is the time to converge. If the same user wants to have multiple mounts, he/she must wait until all the dirty blocks from the cache have been flushed. This of course depends on the write throttling. Nevertheless, we assume that the same client will not be in two places at the same time and therefore, it will take some time to remount the file system elsewhere. Other solution is to use some indicator (like Dropbox does) to warn the user when files are still being updated. \\
-As for the gossip algorithm, the number of stored MB (Sm) calculated has two slight inaccuracies. We check every data entry in the storage object and see if it matches the known block size, we then multiply block found by the block size to the number of MB stored. However, as we've seen, the last block for each file might not be completely used; and in addition, for each block there's 27 bytes of overhead. So, small blocks will have less internal fragmentation, but more overhead due to the increased number of blocks needed for a given file, and large blocks have the opposite effects. Also the size of the blocks is somewhat restricted to what TCP connections can handle, for large files, even blocks as small as 16KB were proven ineffective.
+As for the gossip algorithm, the number of stored MB (Sm) calculated has two slight inaccuracies. We check every data entry in the storage object and see if it matches the known block size, we then multiply block found by the block size to the number of MB stored. However, as we've seen, the last block for each file might not be completely used; and in addition, for each block there's 27 bytes of overhead. So, small blocks will have less internal fragmentation, but more overhead due to the increased number of blocks needed for a given file, and large blocks have the opposite effects.\\
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section:  Implementation Choices
@@ -188,6 +188,35 @@ For the calculation of the averages we use a second weight W2. This value is ini
 \end{figure}
 
 The figure \ref{fig:file_transfer} represents a complete file transfer (the file has 7.2MB). Although the file is readable and the operation succeeds in a short amount of time (due to caching), the file transfer itself takes a bit more time. For this experiment we used 3 nodes, one connected via wireless and two planet lab nodes. We can observe that the file transfer rate is somehow smooth. However, there are two similar pinches (at 111s and 116s). We believe that they might be caused by flushing and retrieving the metadata. However, it could also be some TomP2P issue.
+
+The following is the convergeance time obtained for different sized networks, where each node sends a gossip message every second. The peer is randomly chosen between all the peers each node knows.
+
+# Nodes | Convergeance time (s)
+3 | 4
+4 | 6
+5 | 4
+6 | 5
+7 | 12
+8 | 15
+9 | 25
+
+We also tested with a setup of 1 gossip message every 2 seconds, whose results proved only that the converge time doubles, as the rate of exchange is two times slower.
+Because the number of peers is randomly chosen amongst all the peers a node knows, the convergeance time seems to explode with the number of peers in the network, even though we didn't test with enough peers to reach the maximum amount of peers any node can know to find a limit to this value.
+
+#################
+Num of nodes= 8.999119
+Total num users= 1.163099
+Total num active users= 1.000005
+Avg num files per node= 0.000000
+Avg num MB per node= 0.000000
+#################
+Here we can see a result of a gossip query to a node, after 24 seconds, on a 9 node network.
+As we can see the value of the total number of users is slightly off. But the others are at
+the ending stages of convergeance.
+
+These tests furthered our knowledge regarding the replicas. We knew the peerMaker had 5 replication threads, which lead us to the conclusion that the replication factor was 5. During these tests, with 8 server nodes and one client node (with fuse) we found out information about the client being maintained in 6 of the nodes, consistently. So in fact, besides the information maintained by the node whose id matches the id hash of the object stored, there are 5 aditional replicas in other nodes. So for every bit stored there are actually 6 bits in the network. And this value is what we need to divide when we present the gossip results.
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section:  Conclusions
