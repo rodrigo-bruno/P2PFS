@@ -3,12 +3,7 @@ package p2pfs.filesystem.layers.bridge;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.ConnectException;
 import java.net.Socket;
-import java.net.UnknownHostException;
-
-import p2pfs.filesystem.Main;
-import p2pfs.filesystem.layers.host.*;
 
 /**
  * RemoteBridgeState means that this node will not have local access to the DHT.
