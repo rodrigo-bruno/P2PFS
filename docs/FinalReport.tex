@@ -186,35 +186,38 @@ For the calculation of the averages we use a second weight W2. This value is ini
 \caption{File Transfer Plot (bytes/second)}
 \label{fig:file_transfer}
 \end{figure}
+The figure \ref{fig:file_transfer} represents a complete file transfer (the file has 7.2MB). Although the file is readable and the operation succeeds in a short amount of time (due to caching), the file transfer itself takes a bit more time. For this experiment we used 3 nodes, one connected via wireless and two planet lab nodes. We can observe that the file transfer rate is somehow smooth. However, there are two similar pinches (at 111s and 116s). We believe that they might be caused by flushing and retrieving the metadata. However, it could also be some TomP2P issue.\\
+The following is the convergence time obtained for different sized networks, where each node sends a gossip message every second. The peer is randomly chosen between all the peers each node knows.\\
 
-The figure \ref{fig:file_transfer} represents a complete file transfer (the file has 7.2MB). Although the file is readable and the operation succeeds in a short amount of time (due to caching), the file transfer itself takes a bit more time. For this experiment we used 3 nodes, one connected via wireless and two planet lab nodes. We can observe that the file transfer rate is somehow smooth. However, there are two similar pinches (at 111s and 116s). We believe that they might be caused by flushing and retrieving the metadata. However, it could also be some TomP2P issue.
-
-The following is the convergeance time obtained for different sized networks, where each node sends a gossip message every second. The peer is randomly chosen between all the peers each node knows.
-
-# Nodes | Convergeance time (s)
-3 | 4
-4 | 6
-5 | 4
-6 | 5
-7 | 12
-8 | 15
-9 | 25
+\begin{tabular}{|c|c|}
+  \hline  
+  \textbf{Number of nodes} & \textbf{Convergence time (s)} \\ \hline             
+  3 & 4 \\
+  4 & 6 \\
+  5 & 4 \\
+  6 & 5 \\
+  7 & 12 \\
+  8 & 15 \\
+  9 & 25 \\
+  \hline  
+\end{tabular}\\
 
 We also tested with a setup of 1 gossip message every 2 seconds, whose results proved only that the converge time doubles, as the rate of exchange is two times slower.
-Because the number of peers is randomly chosen amongst all the peers a node knows, the convergeance time seems to explode with the number of peers in the network, even though we didn't test with enough peers to reach the maximum amount of peers any node can know to find a limit to this value.
-
-#################
-Num of nodes= 8.999119
-Total num users= 1.163099
-Total num active users= 1.000005
-Avg num files per node= 0.000000
-Avg num MB per node= 0.000000
-#################
+Because the number of peers is randomly chosen amongst all the peers a node knows, the convergence time seems to explode with the number of peers in the network, even though we didn't test with enough peers to reach the maximum amount of peers any node can know to find a limit to this value.\\
+\begin{tabular}{l}
+  \hline  
+  \textbf{Gossip Query} \\ \hline             
+  Num of nodes = 8.999119 \\
+  Total num users = 1.163099 \\
+  Total num active users = 1.000005 \\
+  Avg num files per node = 0.000000 \\
+  Avg num MB per node = 0.000000 \\
+  \hline  
+\end{tabular}\\
 Here we can see a result of a gossip query to a node, after 24 seconds, on a 9 node network.
 As we can see the value of the total number of users is slightly off. But the others are at
-the ending stages of convergeance.
-
-These tests furthered our knowledge regarding the replicas. We knew the peerMaker had 5 replication threads, which lead us to the conclusion that the replication factor was 5. During these tests, with 8 server nodes and one client node (with fuse) we found out information about the client being maintained in 6 of the nodes, consistently. So in fact, besides the information maintained by the node whose id matches the id hash of the object stored, there are 5 aditional replicas in other nodes. So for every bit stored there are actually 6 bits in the network. And this value is what we need to divide when we present the gossip results.
+the ending stages of convergence.\\
+These tests furthered our knowledge regarding the replicas. We knew the PeerMaker had 5 replication threads, which lead us to the conclusion that the replication factor was 5. During these tests, with 8 server nodes and one client node (with fuse) we found out information about the client being maintained in 6 of the nodes, consistently. So in fact, besides the information maintained by the node whose id matches the id hash of the object stored, there are 5 additional replicas in other nodes. So for every bit stored there are actually 6 bits in the network. And this value is what we need to divide when we present the gossip results.
 
 
 
