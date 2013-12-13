@@ -21,23 +21,8 @@ public class RemoteBridgeState extends BridgeState {
 
 	/**
 	 * Constructor - creates a socket connection to the remote peer thread.
-	 * @throws UnknownHostException - if there is some problem finding the host.
-	 * @throws IOException - any problem regarding the socket establishment.
 	 */
-	public RemoteBridgeState() 
-			throws UnknownHostException, IOException {
-		// TODO: get a random bootstrapNode and try others if the first one fails.
-		// TODO: try to connect to the node with the user name.
-		for (String address : Main.BOOTSTRAP_NODES) {
-			try { 
-				this.socket = new Socket(address, PeerThread.FILESYSTEM_PORT);
-				break;
-			}
-			// this happens if the bootstrap node is down.
-			catch (ConnectException e ) {}
-		}
-		 
-	}
+	public RemoteBridgeState() { this.socket = this.getNewPeerSocket(); }
 
 	/**
 	 * see base doc.

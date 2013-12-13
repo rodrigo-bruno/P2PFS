@@ -42,23 +42,26 @@ public abstract class BridgeState {
 	public abstract Socket getPeerSocket();
 	
 	/**
-	 * TODO
-	 * @return
+	 * Method that will try to reconnect the client with another Peer.
+	 * @return - the new socket.
 	 */
 	public Socket getNewPeerSocket() {
-		Random rand = new Random();
-		int numberBootsraps = Main.BOOTSTRAP_NODES.length;
+		int rand = new Random().nextInt();
 		String tryAddr;
 		while(true) {
+			tryAddr = Main.BOOTSTRAP_NODES[(rand++)%Main.BOOTSTRAP_NODES.length];
 			try {
-				tryAddr = Main.BOOTSTRAP_NODES[rand.nextInt(numberBootsraps)];
 				this.socket = new Socket(tryAddr, PeerThread.FILESYSTEM_PORT);
 				break;
+			} 
+			// if the connection fails
+			catch (UnknownHostException e) { e.printStackTrace(); }
+			catch (IOException e) { e.printStackTrace(); }
+			// sleep one second before trying another.
+			finally { 
+				try { Thread.sleep(1000); } 
+				catch (InterruptedException e) { e.printStackTrace();	} 
 			}
-			// this happens if the bootstrap node is down.
-			catch (ConnectException e ) {} 
-			catch (UnknownHostException e) { } 
-			catch (IOException e) { }			
 		}
 		System.out.println("Connection established to " + tryAddr);
 		return this.socket;
@@ -71,5 +74,4 @@ public abstract class BridgeState {
 	 */
 	public abstract ObjectInputStream getPeerOIS() throws IOException;
 	public abstract ObjectOutputStream getPeerOOS() throws IOException;
-
 }
