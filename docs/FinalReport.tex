@@ -30,6 +30,10 @@ file system on top of a Kademlia peer-to-peer network overlay. Followed by an ev
 % Section:  Problem statement
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Problem Statement}
+In the project assignment we were asked to design, implement and evaluate a solution for a Peer-to-Peer distributed file system, which provides transparency to the user. Each user is also able to mount its file system in more than one machine at the same time. Also, the solution must be able to protect the data sent by the users in a transparent manner, as the user only has to send its files, and from thereafter the system is responsible for maintaining the user data.\\
+As the solution is supposed to be a paid service, users expect an high quality service, which gives information to the user by request. Such information as the number of nodes running our system, number of users of the system, the number of users that have their file system mounted, and some statistical averages of the number of files and amount of MB stored per node.\\
+To implement our solution we had to choose a protocol, which supported our ideology, so between the protocols presented we chose the one that already supported grand part of our ideas.\\
+To evaluate our solution, we will rely on the PlanetLab platform, that provides nodes that we can use as peers for our network, and from there we will make some statistical evaluations.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section:  Protocol Description
