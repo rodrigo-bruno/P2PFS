@@ -143,8 +143,12 @@ Kademlia and therefore TomP2P uses iterative parallel search. Two main benefits 
 Key-Republishing is a very interesting feature and it is important to ensure the  persistence of the key-value pairs. Two phenomena may jeopardize the key-value pairs: a node responsible for the pair leaving the network and a node with a closer id (closer to the key) joining the network. \\
 TomP2P takes care of both scenarios using Indirect Replication. The activation of this mechanism will ensure that nodes react when one of the situations above described happen. This Key-Republishing will be very useful since it will help implementing file replication algorithm that is one of the requirements for our file system.
 
+\subsection{Clients Joining the DHT}
+Other important aspect of our implementation is the possibility of clients to be inside or outside the DHT. In our current implementation, clients will join the network after being connected for some time (15 minutes for example). Our first motivation for this feature was to avoid high client churn (since it has been proven that the more time a node is connected the higher the probability of it being connected for a long time). This feature could also be interesting for mobile devices where one could access his/her files without the overwhelming overhead of being connected to the DHT.
 
-% why clients turn into servers
+\subsection{File block size and Write throttling}
+We believe that these are two fundamental parameters to achieve a proper implementation. % user configurable, network connection, kademlia
+
 % chink size, cache times
 % check storage
 % file chunks size -> spatial locality
