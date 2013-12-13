@@ -64,7 +64,7 @@ public class Gossip {
 	public static final int SEND = 2000;
 	public static final int LISTENING_PORT = 40004;
 	public static final int GOSSIP_MGMT_PORT = 40005;
-	public static final int REPLICATION_LEVEL = 1;
+	public static final int REPLICATION_FACTOR = 5;
 	public static final String[] responsibleNodes = {"planetlab-1.tagus.ist.utl.pt", "planetlab-2.tagus.ist.utl.pt"};
 	
 	private ServerSocket serverSocket;
@@ -118,20 +118,17 @@ public class Gossip {
 	}
 
 	public void showGossip(){
-			System.out.printf("Num of nodes= %f\n", getCountNodes());
-			System.out.printf("Total num users= %f\n", getNumUsers()/REPLICATION_LEVEL);
-			System.out.printf("Total num active users= %f\n", getNumActive()/REPLICATION_LEVEL);
-			System.out.printf("Avg num files per node= %f\n", getNumFiles()/REPLICATION_LEVEL);
-			System.out.printf("Avg num MB per node= %f\n", getNumMB()/REPLICATION_LEVEL);
+		int rep = (int) (getCountNodes() < REPLICATION_FACTOR ? getCountNodes() : REPLICATION_FACTOR);
+		System.out.printf("Num of nodes= %f\n", getCountNodes());
+		System.out.printf("Total num users= %f\n", getNumUsers()/rep);
+		System.out.printf("Total num active users= %f\n", getNumActive()/rep);
+		System.out.printf("Avg num files per node= %f\n", getNumFiles()/rep);
+		System.out.printf("Avg num MB per node= %f\n", getNumMB()/rep);
 	}
 
 	/* When there are no peers, the response to the user query is the self values */
 	public void showSelf(){
-			System.out.printf( "Num of nodes= 1\n" );
-			System.out.printf( "Total num users= %f\n", Gossip.localSu/REPLICATION_LEVEL );
-			System.out.printf( "Total num active users= %f\n", Gossip.localSa/REPLICATION_LEVEL);
-			System.out.printf( "Avg num files per node= %f\n", Gossip.localSs/REPLICATION_LEVEL );
-			System.out.printf( "Avg num MB per node= %f\n", Gossip.localSm/REPLICATION_LEVEL );
+		System.out.printf( "There are no peers!\n");
 	}		
 
 	public double getCountNodes(){
