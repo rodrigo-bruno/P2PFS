@@ -115,21 +115,40 @@ The DHT bridge layer is used to enable clients to be connected to a remote Host 
 Our final layer is the one we called Host layer. This layers is ruled by three objectives: 1) being an access point to DHT (accepting connections from clients, including the local one); 2) be a member of the DHT to operate requests from clients and to help replicating files; 3) perform the gossip algorithm (explained latter in much detail).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Section:  Evaluation of the Protocol
+% Section:  Evaluation of the Protocol (strengths and weaknesses)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-\section{Critical Protocol Evaluation}
+\section{Critical Evaluation of the Protocol}
 
-\subsubsection{Peer to Peer File System}
+Regarding the critical evaluation of the developed protocol, we will point out some aspects that we believe to be significant strengths or weaknesses.
+
+Starting by the division of files by blocks. Dividing a file in several blocks allows us to only fetch the blocks needed for some operation instead of storing and reading the all file at once. This is a big advantage in terms of speed and used bandwidth. However, in a simple implementation like ours, we incur in some waste of space. This is mainly due to the fact that we use fixed length blocks. As that being the last block of each file or a file with just one block may not be filled up completely. The bigger the file block is, the bigger is the wasted space.
+
+The cache is another important feature. It allows us to write and read much faster. We are also able to throttle the write rate to make sure that the user will not get stuck wile after writing a file. However, the downside of this is the time to converge. If the same user wants to have multiple mounts, he/she must wait until all the dirty blocks from cache have been flushed. This of course depends on the write throttling. Nevertheless, we assume that the same client will not be in two places at the same time and therefore, it will take some time to remount the file system else where. Other solution is to use some indicator (like Dropbox does) to warn the user when files are still being updated. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section:  Implementation Choices
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Implementation Choices}
-% why kademlia
+
+We will know describe some decisions that we took and that were fundamental to achieve the solution we are presenting.
+
+\subsection{Kademlia}
+As one of the studied DHTs and one of the proposed DHT implementations for the project, we decided to use TomP2P, a Kademlia's protocol implementation.\\
+This decision was mainly motivated by the fact that Kademlia was designed to be used by file sharing applications and therefore provides some nice features that will be very helpful for our file system's implementation. We will now describe  some of the Kademlia features and explain how we will take advantage of them.
+
+\subsubsection{Iterative Parallel Search}
+Kademlia and therefore TomP2P uses iterative parallel search. Two main benefits from this search procedure are: 1) generated/received information is useful for  refreshing the k-buckets; 2) parallel queries prevents waiting for timeouts to  detect failed nodes and allows the fastest nodes (the ones with the lowest RTT)  to be used. As that being, using Kademlia we will be able to provide a better  quality of service by providing faster search and reduced maintenance traffic.
+
+\subsubsection{Key-Republishing}
+Key-Republishing is a very interesting feature and it is important to ensure the  persistence of the key-value pairs. Two phenomena may jeopardize the key-value pairs: a node responsible for the pair leaving the network and a node with a closer id (closer to the key) joining the network. \\
+TomP2P takes care of both scenarios using Indirect Replication. The activation of this mechanism will ensure that nodes react when one of the situations above described happen. This Key-Republishing will be very useful since it will help implementing file replication algorithm that is one of the requirements for our file system.
+
+
 % why clients turn into servers
 % chink size, cache times
 % check storage
-% homes and file chunks -> spatial locality 
+% file chunks size -> spatial locality
+% metadatas as one object 
 
 
 
