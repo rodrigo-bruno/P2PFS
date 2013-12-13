@@ -60,9 +60,9 @@ public class Gossip {
 
 	private PeerThread peerThread;
 
-	public static final int RESET = 30000;
+	public static final int RESET = 90000;
 	public static final int START_CHECK = 100; //freq at which node zero checks if it has peers to start gossip
-	public static final int SEND = 2000;
+	public static final int SEND = 1000;
 	public static final int LISTENING_PORT = 40004;
 	public static final int GOSSIP_MGMT_PORT = 40005;
 	public static final int REPLICATION_FACTOR = 5;
