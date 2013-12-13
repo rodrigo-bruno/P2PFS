@@ -39,7 +39,7 @@ public class File extends Path implements Serializable {
 	/**
 	 * Max size for each block (in bytes) = 32Kb.
 	 */
-	public static long BLOCK_SIZE = 32*1024;
+	public static long BLOCK_SIZE = 16*1024;
 	
 	/**
 	 * Constructor.
@@ -100,7 +100,7 @@ public class File extends Path implements Serializable {
 	 */
 	public void truncate(final long size, FileSystemBridge fsb){
 		this.size = size;
-		this.numberBlocks = (int) (size/File.BLOCK_SIZE);
+		this.numberBlocks = (int) (size/this.BLOCK_SIZE);
 	}
 
 	/**
@@ -113,9 +113,9 @@ public class File extends Path implements Serializable {
 	public int write(final ByteBuffer buffer, final long bufSize, final long writeOffset, FileSystemBridge fsb){
 		// compute some information regarding the requested read.
 		final int maxWriteIndex = (int) (writeOffset + bufSize) - 1;
-		int startBlock = (int) (writeOffset/File.BLOCK_SIZE);
-		int endBlock = (int) (maxWriteIndex/File.BLOCK_SIZE);
-		long realWriteOffset = writeOffset - startBlock*File.BLOCK_SIZE;
+		int startBlock = (int) (writeOffset/this.BLOCK_SIZE);
+		int endBlock = (int) (maxWriteIndex/this.BLOCK_SIZE);
+		long realWriteOffset = writeOffset - startBlock*this.BLOCK_SIZE;
 		// retrieve the file segment where the write will be performed.
 		ByteBuffer bb = getSplittedBlock(startBlock, endBlock, fsb);	
 		// prepare the write and write.
@@ -142,11 +142,11 @@ public class File extends Path implements Serializable {
 	ByteBuffer getSplittedBlock(int startBlock, int endBlock, FileSystemBridge fsb) {
 		int nblocks = endBlock - startBlock + 1;
 		// create the array that will contain all the file parts
-		ByteBuffer bb = ByteBuffer.allocate((int) (File.BLOCK_SIZE*nblocks));
+		ByteBuffer bb = ByteBuffer.allocate((int) (this.BLOCK_SIZE*nblocks));
 		// fill array with existent chunks
 		for(	int position = bb.position(), index = startBlock; 
 				index <= endBlock && index < this.numberBlocks; 
-				index++, position += File.BLOCK_SIZE) {  
+				index++, position += this.BLOCK_SIZE) {  
 			bb.position(position);
 			int hash; 
 			synchronized(this.hashes) { hash = this.hashes.get(new String(this.name+index)).intValue(); }
@@ -175,9 +175,9 @@ public class File extends Path implements Serializable {
 		// for each block, copy bytes and store. 
 		for(	int position = bb.position(),index = startBlock; 
 				index <= endBlock; 
-				index++,position += File.BLOCK_SIZE) {
+				index++,position += this.BLOCK_SIZE) {
 			// creating an ephemeral buffer to transfer bytes
-			final byte[] transferBuffer = new byte[(int) File.BLOCK_SIZE];
+			final byte[] transferBuffer = new byte[(int) this.BLOCK_SIZE];
 			bb.position(position);
 			bb.get(transferBuffer);
 			// put hash code into map
