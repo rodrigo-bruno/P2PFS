@@ -16,10 +16,7 @@
 package examples;
 
 import java.net.InetAddress;
-import java.nio.ByteBuffer;
 import java.util.Random;
-
-import org.jboss.netty.buffer.ByteBufferBackedChannelBuffer;
 
 import net.tomp2p.connection.Bindings; // it was connection2...
 import net.tomp2p.connection.ChannelCreator; // it was connection2...
@@ -30,7 +27,6 @@ import net.tomp2p.p2p.Peer;
 import net.tomp2p.p2p.PeerMaker;
 import net.tomp2p.peers.Number160;
 import net.tomp2p.peers.PeerAddress;
-import net.tomp2p.rpc.ObjectDataReply;
 
 public class ExampleNAT
 {
