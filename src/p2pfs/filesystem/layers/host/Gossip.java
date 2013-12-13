@@ -121,14 +121,18 @@ public class Gossip {
 		int rep = (int) (getCountNodes() < REPLICATION_FACTOR ? getCountNodes() : REPLICATION_FACTOR);
 		System.out.printf("Num of nodes= %f\n", getCountNodes());
 		System.out.printf("Total num users= %f\n", getNumUsers()/rep);
-		System.out.printf("Total num active users= %f\n", getNumActive()/rep);
+		System.out.printf("Total num active users= %f\n", getNumActive()); // not calculated based on storage
 		System.out.printf("Avg num files per node= %f\n", getNumFiles()/rep);
 		System.out.printf("Avg num MB per node= %f\n", getNumMB()/rep);
 	}
 
 	/* When there are no peers, the response to the user query is the self values */
 	public void showSelf(){
-		System.out.printf( "There are no peers!\n");
+		System.out.printf( "Num of nodes= 1\n" );
+		System.out.printf( "Local num users= %f\n", Gossip.localSu );
+		System.out.printf( "Local num active users= %f\n", Gossip.localSa);
+		System.out.printf( "Local num files= %f\n", Gossip.localSs);
+		System.out.printf( "Local num MB= %f\n", Gossip.localSm);
 	}		
 
 	public double getCountNodes(){

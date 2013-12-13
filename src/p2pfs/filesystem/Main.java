@@ -144,6 +144,10 @@ public class Main {
 					else if(line.equals("gossip")){
 						GOSSIP.showGossip();					
 					}
+					// SHOW GOSSIP
+					else if(line.equals("self")){
+						GOSSIP.showSelf();					
+					}
 					// SHOW PEERS
 					else if(line.equals("peers")){	
 						GOSSIP.showPeers();
