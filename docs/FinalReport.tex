@@ -1,6 +1,7 @@
 \documentclass[times,9pt,article]{llncs}
 \usepackage{times}
 \usepackage{makeidx}
+\usepackage{algorithm2e}
 
 \begin{document}
 \title{Peer-to-Peer File System}
@@ -39,13 +40,79 @@ file system on top of a Kademlia peer-to-peer network overlay. Followed by an ev
 In order to better understand the all system behavior and associated protocol, it is important  to note first, the system's architectural division. Our system is divided in several layers:
 
 \begin{itemize}
-\item FUSE API implementation - this layer is responsible for receiving and processing all the sent by FUSE (the upper layers that is outside our system);
-\item File System Cache - this layer is responsible for delaying persistent writes and for caching updated file blocks;
-\item DHT Bridge - this layer abstracts the basic operations provided by the DHT. It is used to enable clients to be part of the DHT or not;
-\item Host - this bottom layer for our system. It is like a small server that receives requests from any number of clients (including the local one) and injects them into the DHT.
+\item \textbf{FUSE API implementation}: this layer is responsible for receiving and processing all the sent by FUSE (the upper layers that is outside our system);
+\item \textbf{File System Cache}: this layer is responsible for delaying persistent writes and for caching updated file blocks;
+\item \textbf{DHT Bridge}: this layer abstracts the basic operations provided by the DHT. It is used to enable clients to be part of the DHT or not;
+\item \textbf{Host}: this bottom layer for our system. It is like a small server that receives requests from any number of clients (including the local one) and injects them into the DHT.
 \end{itemize}
 
+Now we will describe the in detail the goals and protocol encapsulated by each one of the presented layers.
 
+\subsubsection{FUSE API Implementation}
+
+As just presented, this is where our system handles the FUSE calls to retrieve and store information. We believe that the most interesting part of this layer is the algorithm that converts index based access to files into block accesses. Although the implementation was hard to get right, the algorithm is very simple:
+
+\begin{enumerate}
+\item Give a file block size and the index interval to access, it is possible to calculate the first and the last block where the read or write will take effect;
+\item Knowing the first and the last block indexes, we fetch all the blocks between the first and the last (including these two off obviously);
+\item Once all the blocks have arrived, we copy all of them into larger buffer that will be used to perform the read or write;
+\item When the FUSE operation is done, the reverse operation is done, we take a large buffer (and the first and last block indexes) and we split it into blocks that will be pushed to the DHT (using the Cache).
+\end{enumerate}
+
+\subsubsection{File System Cache}
+
+This is perhaps the most interesting layer inside the FS related part of the project. By using a simple cache it was possible to obtain a huge boost in the FS performance.
+
+This cache has two purposes: 
+\begin{enumerate}
+\item \textbf{holding writes}: this is very important since file access (read and writes) are usually sequential and by that, we can assume that if a block was created just now, it will most probably be accessed in the near future (this is the temporal locality principle);
+\item \textbf{keeping a local copy}: this means that when we have a write or read and some blocks go through the cache, they will stay there until they are declared out dated and replaced by new blocks.
+\end{enumerate}
+
+
+The basic protocol for handling read requests is the following: if the requested object is on cache, check the hash. If it matches, return it, otherwise use the DHT to retrieve the object, store it and then return it.
+
+For handling write requests the protocol is even more simple: we just store the object on cache.
+
+The interesting part of the protocol is executed periodically to refresh all the cache objects. It goes as follows:
+
+\begin{algorithm}[H]
+ $TIC \longleftarrow maximum\ time\ in\ cache$\;
+ $MBF \longleftarrow maximum\ number\ of\ block\ flushes\ per\ iteration$\;
+ \For{$all\ the\ cached\ objects$}{
+  $ttf \longleftarrow time\ to\ flush -\ refresh\ interval$\;
+  $tic \longleftarrow time\ in\ cache +\ refresh\ interval$\;
+  $mbf \longleftarrow 0$\;
+  $dirty \longleftarrow was\ the\ file\ modified?$\;
+  \If{$tic\ >=\ TIC\ and\ ttf <=\ 0$}{
+   \If{$object\ is\ file\ block\ and\ mbf\ <\ MBF\ and\ is\ dirty$}{
+    write block to DHT\;
+    $dirty \longleftarrow false$\;
+    $mbf++$\;
+   }
+   \ElseIf{$object is\ Metadata$}{
+    write Metadata to DHT\;
+    remove from cache\;
+   }
+  }
+ }
+\end{algorithm}
+
+To complement the algorithm we will leave some important details:
+
+\begin{itemize}
+\item for file blocks, the get method will check if the block is cached and if so, it will check the hash. If it doesn't match, we need to re-fetch the block and cache it;
+\item for each access (read or write) the time to flush the object is incremented to its maximum value. This represents that the block is being accessed and we would like to delay the write as much as possible;
+\item file blocks are never removed from cache until a get request detects that it is out dated;
+\item metadata objects are always removed from cache to force the client to re-fetch the metadata periodically. This ensures that we will have always updated block hashes.
+\end{itemize}
+
+\subsubsection{DHT Bridge}
+
+The DHT bridge layer is used to enable clients to be connected to a remote Host (a node inside the DHT). This way, a client can be connected connected directly to the DHT or use some other node as access point for the DHT. We will latter explain (in Implementation Choices) why we use this bridge.
+
+\subsubsection{Host}
+Our final layer is the one we called Host layer. This layers is ruled by three objectives: 1) being an access point to DHT (accepting connections from clients, including the local one); 2) be a member of the DHT to operate requests from clients and to help replicating files; 3) perform the gossip algorithm (explained latter in much detail).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section:  Evaluation of the Protocol
@@ -62,6 +129,7 @@ In order to better understand the all system behavior and associated protocol, i
 % why clients turn into servers
 % chink size, cache times
 % check storage
+% homes and file chunks -> spatial locality 
 
 
 
