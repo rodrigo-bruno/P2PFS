@@ -186,7 +186,7 @@ For the calculation of the averages we use a second weight W2. This value is ini
 \caption{File Transfer Plot (bytes/second)}
 \label{fig:file_transfer}
 \end{figure}
-The figure \ref{fig:file_transfer} represents a complete file transfer (the file has 7.2MB). Although the file is readable and the operation succeeds in a short amount of time (due to caching), the file transfer itself takes a bit more time. For this experiment we used 3 nodes, one connected via wireless and two planet lab nodes. We can observe that the file transfer rate is somehow smooth. However, there are two similar pinches (at 111s and 116s). We believe that they might be caused by flushing and retrieving the metadata. However, it could also be some TomP2P issue.\\
+The figure \ref{fig:file_transfer} represents a complete file transfer (the file has 7.2MB). Although the file is readable and the operation succeeds in a short amount of time (due to caching), the file transfer itself takes a bit more time. For this experiment we used 3 nodes, one connected via wireless and two planet lab nodes. We can observe that the file transfer rate is somehow smooth. However, there are two similar pinches (at 111s and 116s). We believe that they might be caused by flushing and retrieving the metadata. However, it could also be some TomP2P issue. We decided not to evaluate the transfer time with different sizes or different block sizes since we are limiting the writes and thus, the speed is determined by our parameters (now it is 160KB/s). \\
 The following is the convergence time obtained for different sized networks, where each node sends a gossip message every second. The peer is randomly chosen between all the peers each node knows.\\
 
 \begin{tabular}{|c|c|}
