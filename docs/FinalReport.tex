@@ -72,12 +72,8 @@ This cache has two purposes:
 \item \textbf{holding writes}: this is very important, since file access (reads and writes) are usually sequential and by that, we can assume that if a block was created just now, it will most probably be accessed in the near future (this is the temporal locality principle);
 \item \textbf{keeping a local copy}: this means that when we have a write or a read, and some blocks go through the cache, they will stay there until they are declared out dated and replaced by new blocks.
 \end{enumerate}
-
-
-The basic protocol for handling read requests is the following: if the requested object is on cache, the hash is checked. If it matches, return it, otherwise use the DHT to retrieve the object, store it and then return it.
-
-For handling write requests the protocol is even more simple: we just store the object on cache.
-
+The basic protocol for handling read requests is the following: if the requested object is on cache, the hash is checked. If it matches, return it, otherwise use the DHT to retrieve the object, store it and then return it.\\
+For handling write requests the protocol is even more simple: we just store the object on cache.\\
 The interesting part of the protocol is executed periodically to refresh all the cache objects. It goes as follows:
 
 \begin{algorithm}[H]
