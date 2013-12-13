@@ -23,35 +23,56 @@ In this document we will be describing our solution and explaining how we fulfil
 We will start by explaining the problems faced, as well as detailing the project requirements during the implementation of this project and then we detail the protocol that we used for implementing a distributed
 file system on top of a Kademlia peer-to-peer network overlay. Followed by an evaluation of the system and an explanation of all our choices made in the duration of this project.
 
+% mention that the report will be divided in: P2P File System and Gossip Algorithm.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Section 2:  Problem statement
+% Section:  Problem statement
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Problem Statement}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Section:  Protocol Description
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Protocol Description}
+
+\subsection{Peer to Peer File System}
+In order to better understand the all system behavior and associated protocol, it is important  to note first, the system's architectural division. Our system is divided in several layers:
+
+\begin{itemize}
+\item FUSE API implementation - this layer is responsible for receiving and processing all the sent by FUSE (the upper layers that is outside our system);
+\item File System Cache - this layer is responsible for delaying persistent writes and for caching updated file blocks;
+\item DHT Bridge - this layer abstracts the basic operations provided by the DHT. It is used to enable clients to be part of the DHT or not;
+\item Host - this bottom layer for our system. It is like a small server that receives requests from any number of clients (including the local one) and injects them into the DHT.
+\end{itemize}
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Section 3:  Evaluation of the Protocol
+% Section:  Evaluation of the Protocol
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-\section{Protocol Evaluation}
+\section{Critical Protocol Evaluation}
 
+\subsubsection{Peer to Peer File System}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Section 4:  Implementation Choices
+% Section:  Implementation Choices
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Implementation Choices}
-
+% why kademlia
+% why clients turn into servers
+% chink size, cache times
+% check storage
 
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Section 5:  Experimental Evaluation
+% Section:  Experimental Evaluation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Experimental Evaluation}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Section 6:  Conclusions
+% Section:  Conclusions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusions}
 
