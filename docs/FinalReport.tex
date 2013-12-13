@@ -37,25 +37,25 @@ file system on top of a Kademlia peer-to-peer network overlay. Followed by an ev
 \section{Protocol Description}
 
 \subsection{Peer to Peer File System}
-In order to better understand the all system behavior and associated protocol, it is important  to note first, the system's architectural division. Our system is divided in several layers:
+In order to better understand all the system behavior and associated protocol, it is important  to note first, the system's architectural division. Our system is divided in several layers:
 
 \begin{itemize}
-\item \textbf{FUSE API implementation}: this layer is responsible for receiving and processing all the sent by FUSE (the upper layers that is outside our system);
+\item \textbf{FUSE API implementation}: this layer is responsible for receiving and processing all that is sent by FUSE (the upper layers that is outside our system);
 \item \textbf{File System Cache}: this layer is responsible for delaying persistent writes and for caching updated file blocks;
 \item \textbf{DHT Bridge}: this layer abstracts the basic operations provided by the DHT. It is used to enable clients to be part of the DHT or not;
-\item \textbf{Host}: this bottom layer for our system. It is like a small server that receives requests from any number of clients (including the local one) and injects them into the DHT.
+\item \textbf{Host}: this is the bottom layer for our system. It is like a small server that receives requests from any number of clients (including the local ones) and injects them into the DHT.
 \end{itemize}
 
-Now we will describe the in detail the goals and protocol encapsulated by each one of the presented layers.
+Now we will describe in detail the goals and the protocol encapsulated by each one of the presented layers.
 
 \subsubsection{FUSE API Implementation}
 
-As just presented, this is where our system handles the FUSE calls to retrieve and store information. We believe that the most interesting part of this layer is the algorithm that converts index based access to files into block accesses. Although the implementation was hard to get right, the algorithm is very simple:
+As presented before, this is where our system handles the FUSE calls to retrieve and store information. We believe that the most interesting part of this layer is the algorithm that converts index based access to files into block accesses. Although the implementation was hard to get it right, the algorithm is very simple:
 
 \begin{enumerate}
-\item Give a file block size and the index interval to access, it is possible to calculate the first and the last block where the read or write will take effect;
-\item Knowing the first and the last block indexes, we fetch all the blocks between the first and the last (including these two off obviously);
-\item Once all the blocks have arrived, we copy all of them into larger buffer that will be used to perform the read or write;
+\item Given a file block size and the index interval to access, it is possible to calculate the first and the last block where the read or write will take effect;
+\item Having the first and the last block indexes, we fetch all the blocks between the first and the last (including these two off obviously);
+\item Once all the blocks have arrived, we copy all of them into a larger buffer that will be used to perform the read or write;
 \item When the FUSE operation is done, the reverse operation is done, we take a large buffer (and the first and last block indexes) and we split it into blocks that will be pushed to the DHT (using the Cache).
 \end{enumerate}
 
@@ -65,12 +65,12 @@ This is perhaps the most interesting layer inside the FS related part of the pro
 
 This cache has two purposes: 
 \begin{enumerate}
-\item \textbf{holding writes}: this is very important since file access (read and writes) are usually sequential and by that, we can assume that if a block was created just now, it will most probably be accessed in the near future (this is the temporal locality principle);
-\item \textbf{keeping a local copy}: this means that when we have a write or read and some blocks go through the cache, they will stay there until they are declared out dated and replaced by new blocks.
+\item \textbf{holding writes}: this is very important, since file access (reads and writes) are usually sequential and by that, we can assume that if a block was created just now, it will most probably be accessed in the near future (this is the temporal locality principle);
+\item \textbf{keeping a local copy}: this means that when we have a write or a read, and some blocks go through the cache, they will stay there until they are declared out dated and replaced by new blocks.
 \end{enumerate}
 
 
-The basic protocol for handling read requests is the following: if the requested object is on cache, check the hash. If it matches, return it, otherwise use the DHT to retrieve the object, store it and then return it.
+The basic protocol for handling read requests is the following: if the requested object is on cache, the hash is checked. If it matches, return it, otherwise use the DHT to retrieve the object, store it and then return it.
 
 For handling write requests the protocol is even more simple: we just store the object on cache.
 
@@ -90,7 +90,7 @@ The interesting part of the protocol is executed periodically to refresh all the
     $dirty \longleftarrow false$\;
     $mbf++$\;
    }
-   \ElseIf{$object is\ Metadata$}{
+   \ElseIf{$object\ is\ Metadata$}{
     write Metadata to DHT\;
     remove from cache\;
    }
@@ -98,21 +98,21 @@ The interesting part of the protocol is executed periodically to refresh all the
  }
 \end{algorithm}
 
-To complement the algorithm we will leave some important details:
+To complement the algorithm some important details will follow:
 
 \begin{itemize}
-\item for file blocks, the get method will check if the block is cached and if so, it will check the hash. If it doesn't match, we need to re-fetch the block and cache it;
+\item for file blocks, the \emph{get} method will check if the block is cached and if so, it will check the hash. If it doesn't match, we need to re-fetch the block and cache it;
 \item for each access (read or write) the time to flush the object is incremented to its maximum value. This represents that the block is being accessed and we would like to delay the write as much as possible;
-\item file blocks are never removed from cache until a get request detects that it is out dated;
+\item file blocks are never removed from cache until a \emph{get} request detects that it is out dated;
 \item metadata objects are always removed from cache to force the client to re-fetch the metadata periodically. This ensures that we will have always updated block hashes.
 \end{itemize}
 
 \subsubsection{DHT Bridge}
 
-The DHT bridge layer is used to enable clients to be connected to a remote Host (a node inside the DHT). This way, a client can be connected connected directly to the DHT or use some other node as access point for the DHT. We will latter explain (in Implementation Choices) why we use this bridge.
+The DHT bridge layer is used to enable clients to be connected to a remote Host (a node inside the DHT). This way, a client can be connected directly to the DHT or use some other node as access point for the DHT. We will later explain (in Implementation Choices) why we use this bridge.
 
 \subsubsection{Host}
-Our final layer is the one we called Host layer. This layers is ruled by three objectives: 1) being an access point to DHT (accepting connections from clients, including the local one); 2) be a member of the DHT to operate requests from clients and to help replicating files; 3) perform the gossip algorithm (explained latter in much detail).
+Our final layer is the one we called Host layer. This layer is ruled by three objectives: 1) being an access point to DHT (accepting connections from clients, including the local ones); 2) be a member of the DHT to operate requests from clients and to help replicating files; 3) perform the gossip algorithm (explained later in much detail).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section:  Evaluation of the Protocol (strengths and weaknesses)
@@ -121,23 +121,23 @@ Our final layer is the one we called Host layer. This layers is ruled by three o
 
 Regarding the critical evaluation of the developed protocol, we will point out some aspects that we believe to be significant strengths or weaknesses.
 
-Starting by the division of files by blocks. Dividing a file in several blocks allows us to only fetch the blocks needed for some operation instead of storing and reading the all file at once. This is a big advantage in terms of speed and used bandwidth. However, in a simple implementation like ours, we incur in some waste of space. This is mainly due to the fact that we use fixed length blocks. As that being the last block of each file or a file with just one block may not be filled up completely. The bigger the file block is, the bigger is the wasted space.
+Starting by the division of files by blocks. Dividing a file in several blocks allows us to only fetch the blocks needed for some operation instead of storing and reading the complete file at once. This is a big advantage in terms of speed and used bandwidth. However, in a simple implementation like ours, we incur in some waste of space. This is mainly due to the fact that we use fixed length blocks. As that being the last block of each file, or a file with just one block may not be filled up completely. The bigger the file block is, the bigger the wasted space becomes.
 
-The cache is another important feature. It allows us to write and read much faster. We are also able to throttle the write rate to make sure that the user will not get stuck wile after writing a file. However, the downside of this is the time to converge. If the same user wants to have multiple mounts, he/she must wait until all the dirty blocks from cache have been flushed. This of course depends on the write throttling. Nevertheless, we assume that the same client will not be in two places at the same time and therefore, it will take some time to remount the file system else where. Other solution is to use some indicator (like Dropbox does) to warn the user when files are still being updated. 
+The cache is another important feature. It allows us to write and read much faster. We are also able to throttle the write rate to make sure that the user will not get stuck after writing a file. However, the downside of this is the time to converge. If the same user wants to have multiple mounts, he/she must wait until all the dirty blocks from the cache have been flushed. This of course depends on the write throttling. Nevertheless, we assume that the same client will not be in two places at the same time and therefore, it will take some time to remount the file system elsewhere. Other solution is to use some indicator (like Dropbox does) to warn the user when files are still being updated. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section:  Implementation Choices
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Implementation Choices}
 
-We will know describe some decisions that we took and that were fundamental to achieve the solution we are presenting.
+We will know describe some decisions that we took and that were fundamental to achieve the solution that we are presenting.
 
 \subsection{Kademlia}
 As one of the studied DHTs and one of the proposed DHT implementations for the project, we decided to use TomP2P, a Kademlia's protocol implementation.\\
-This decision was mainly motivated by the fact that Kademlia was designed to be used by file sharing applications and therefore provides some nice features that will be very helpful for our file system's implementation. We will now describe  some of the Kademlia features and explain how we will take advantage of them.
+This decision was mainly motivated by the fact that Kademlia was designed to be used by file sharing applications and therefore provides some nice features that will be very helpful for our file system's implementation. We will now describe  some of the Kademlia's features and explain how we will take advantage of them.
 
 \subsubsection{Iterative Parallel Search}
-Kademlia and therefore TomP2P uses iterative parallel search. Two main benefits from this search procedure are: 1) generated/received information is useful for  refreshing the k-buckets; 2) parallel queries prevents waiting for timeouts to  detect failed nodes and allows the fastest nodes (the ones with the lowest RTT)  to be used. As that being, using Kademlia we will be able to provide a better  quality of service by providing faster search and reduced maintenance traffic.
+Kademlia and therefore TomP2P uses iterative parallel search. Two main benefits from this search procedure are: 1) generated/received information is useful for  refreshing the k-buckets; 2) parallel queries prevents waiting for time-outs to  detect failed nodes and allows the fastest nodes (the ones with the lowest RTT)  to be used. As that being, using Kademlia we will be able to provide a better  quality of service by providing faster search and reduced maintenance traffic.
 
 \subsubsection{Key-Republishing}
 Key-Republishing is a very interesting feature and it is important to ensure the  persistence of the key-value pairs. Two phenomena may jeopardize the key-value pairs: a node responsible for the pair leaving the network and a node with a closer id (closer to the key) joining the network. \\
