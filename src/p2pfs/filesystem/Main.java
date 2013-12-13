@@ -171,7 +171,7 @@ public class Main {
 		System.out.println("Peer Thread Creation -> Done");
 		Main.PEER_THREAD.start();
 		
-		if(Main.USERNAME == null) { Main.KADEMLIA_BRIDGE.setState(new LocalBridgeState()); }
+		if(Main.USERNAME != null) { Main.KADEMLIA_BRIDGE.setState(new LocalBridgeState()); }
 
 		/* Gossip threads started here */
         Main.GOSSIP = new Gossip(Main.PEER_THREAD);
