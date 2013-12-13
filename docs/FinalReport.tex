@@ -144,7 +144,7 @@ Key-Republishing is a very interesting feature and it is important to ensure the
 TomP2P takes care of both scenarios using Indirect Replication. The activation of this mechanism will ensure that nodes react when one of the situations above described happen. This Key-Republishing will be very useful since it will help implementing file replication algorithm that is one of the requirements for our file system.
 
 \subsection{Clients Joining the DHT}
-Other important aspect of our implementation is the possibility of clients to be inside or outside the DHT. In our current implementation, clients will join the network after being connected for some time (15 minutes for example). Our first motivation for this feature was to avoid high client churn (since it has been proven that the more time a node is connected the higher the probability of it staying connected for a long time). This feature could also be interesting for mobile devices where one could access his/her files without the overwhelming overhead of being connected to the DHT.
+Other important aspect of our implementation is the possibility of clients to be inside or outside the DHT. In our current implementation, clients will join the network after being connected for some time (15 minutes for example). Our first motivation for this feature was to avoid high client churn (since it has been proven that the more time a node is connected, the higher the probability of it staying connected for a long time). This feature could also be interesting for mobile devices where one could access his/her files without the overwhelming overhead of being connected to the DHT.
 
 \subsection{File block size and Write throttling}
 We believe that these are two fundamental parameters to achieve a proper implementation. File block sizes bigger than 4K (the usual write/read buffer used by FUSE) will act as pre-fetching and thus will increase the performance (spatial locality applies to this scenario since FUSE will most probably use more space ahead). Apart from the space inefficiency, increasing the file block size will also harm the DHT (since it was not built for storing large files). Regarding the write throttling, it should be configurable according to the available network bandwidth (it can be a user configuration parameter). For the prototype we are delivering we use file blocks of 16KB and 10 writes per second, 160KB/s (this value was obtained after testing multiple values).
@@ -162,6 +162,7 @@ Within our DHT, we only store two types of objects: metadata objects and file bl
 % Section:  Conclusions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Conclusions}
-
+In a general view, we can say that we achieved a pretty good result, in a way that we accomplished all that it was asked in the project description.
+More in detail, the choices made were also very efficient in solving our problems, with its strengths and weaknesses already explained.
 
 \end{document}
