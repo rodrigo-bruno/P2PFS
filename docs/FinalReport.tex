@@ -2,6 +2,7 @@
 \usepackage{times}
 \usepackage{makeidx}
 \usepackage{algorithm2e}
+\usepackage{graphicx}
 
 \begin{document}
 \title{Peer-to-Peer File System}
@@ -179,6 +180,14 @@ For the calculation of the averages we use a second weight W2. This value is ini
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Experimental Evaluation}
 
+\begin{figure}
+\centering
+\includegraphics[keepaspectratio,width=1\textwidth]{images/file_transfer.png}
+\caption{File Transfer Plot (bytes/second)}
+\label{fig:file_transfer}
+\end{figure}
+
+The figure \ref{fig:file_transfer} represents complete file transfer (the file has 7.2MB). Although the file is readable and the operation succeeds vary fast (due to caching), the file transfer takes a bit while. For this experiment we used 3 nodes, one connected via wireless and two planet lab nodes. We can observe that the file transfer rate is somehow smooth. However, there are two similar pinches (at 111s and 116s). We believe that they might be caused by flushing and retrieving the metadata. However, it could also be some TomP2P issue.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Section:  Conclusions
