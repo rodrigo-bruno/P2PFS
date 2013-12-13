@@ -65,7 +65,7 @@ public class Gossip {
 	public static final int SEND = 1000;
 	public static final int LISTENING_PORT = 40004;
 	public static final int GOSSIP_MGMT_PORT = 40005;
-	public static final int REPLICATION_FACTOR = 5;
+	public static final int REPLICATION_FACTOR = 6;
 	public static final String[] responsibleNodes = Main.BOOTSTRAP_NODES;
 	
 	private ServerSocket serverSocket;
@@ -260,7 +260,7 @@ public class Gossip {
 								// If not we check the connectivity of that node to see if it's available
 								else{
 									Socket cs = connect(node, GOSSIP_MGMT_PORT);
-									System.out.printf("RESET by node: "+node+"\n");
+									System.out.printf("Node responsible for RESET: "+node+"\n");
 									cs.close();
 									break;
 								}
@@ -314,14 +314,7 @@ public class Gossip {
 	}
 	
 	public void sendGossip(String ip, int port) throws IOException{
-		Gossip.W1 /= 2;
-		Gossip.Su /= 2;
-		Gossip.Sn /= 2;
-		Gossip.Sa /= 2;
-		Gossip.W2 /= 2;
-		Gossip.Ss /= 2;
-		Gossip.Sm /= 2;
-		
+	
 		int blockn = 0;
 		int usern = 0;
 		int filesn = 0;
@@ -349,12 +342,21 @@ public class Gossip {
 		
 		
 		try{
+			
 			Socket cs = connect(ip, port);
 
 			System.out.printf("Sending Gossip msg to "+ cs.getInetAddress().getHostAddress()+":"+
 					cs.getPort() + " with gossipId %d\n", Gossip.currentGossip);
-			new ObjectOutputStream(cs.getOutputStream()).writeObject(new GossipDTO(Gossip.currentGossip , Gossip.id, Gossip.W1, Gossip.Su, Gossip.Sn, Gossip.Sa, Gossip.W2, Gossip.Ss, Gossip.Sm));
+
+			new ObjectOutputStream(cs.getOutputStream()).writeObject(new GossipDTO(Gossip.currentGossip , Gossip.id, Gossip.W1/2, Gossip.Su/2, Gossip.Sn/2, Gossip.Sa/2, Gossip.W2/2, Gossip.Ss/2, Gossip.Sm/2));
 			cs.close();
+			Gossip.W1 /= 2;
+			Gossip.Su /= 2;
+			Gossip.Sn /= 2;
+			Gossip.Sa /= 2;
+			Gossip.W2 /= 2;
+			Gossip.Ss /= 2;
+			Gossip.Sm /= 2;
 		}catch (ClassNotFoundException cnfe) {  cnfe.printStackTrace(); }
 	}
 
