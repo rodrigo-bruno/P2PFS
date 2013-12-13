@@ -176,7 +176,7 @@ public class Gossip {
 		Gossip.localSu = usern;
 		Gossip.localSa = activen;
 		Gossip.localSs = filesn;
-		Gossip.localSm = blockn*131099/1024/1024;
+		Gossip.localSm = blockn*File.BLOCK_SIZE/1024/1024;
 		updateNumUsers(Gossip.localSu - oldSu);
 		updateNumActive(Gossip.localSa - oldSa);
 		updateNumFiles(Gossip.localSs - oldSs);
