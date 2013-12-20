@@ -73,7 +73,7 @@ public class Main {
 	 * a local one.
 	 * FIXME: this should be loaded from a config file.
 	 */
-	final private static int remoteStateTime = 15*1000; 
+	final private static int remoteStateTime = Integer.MAX_VALUE; 
 
 	/**
 	 * Main method.
